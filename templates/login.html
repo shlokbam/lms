@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign In — Eagle Security LMS</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body style="background:var(--bg)">
+<div class="auth-wrap">
+  <div class="auth-left">
+    <div class="auth-grid"></div><div class="auth-glow"></div>
+    <div class="auth-left-inner">
+      <div class="auth-logo">🦅</div>
+      <h1>Eagle Industrial Services</h1>
+      <div class="auth-tagline">{{ COMPANY.tagline }}</div>
+      <p>A premier provider of security and facility management solutions, backed by {{ COMPANY.years }} years of military-grade discipline.</p>
+      <div class="auth-stats">
+        <div><div class="auth-stat-n">35+</div><div class="auth-stat-l">Years</div></div>
+        <div style="width:1px;background:rgba(255,255,255,.08)"></div>
+        <div><div class="auth-stat-n">110+</div><div class="auth-stat-l">Clients</div></div>
+        <div style="width:1px;background:rgba(255,255,255,.08)"></div>
+        <div><div class="auth-stat-n">2.5K+</div><div class="auth-stat-l">Workforce</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-right">
+    <div style="max-width:380px;width:100%;margin:0 auto">
+      <div class="flex items-c gap-3" style="margin-bottom:36px">
+        <div style="width:34px;height:34px;background:linear-gradient(135deg,var(--eagle-gold),#F5C842);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px">🦅</div>
+        <span style="font-family:'DM Serif Display',serif;font-size:16px;font-weight:400;color:var(--t1)">Eagle LMS</span>
+      </div>
+
+      <h2 class="auth-heading">Welcome back</h2>
+      <p class="auth-sub">Sign in to your training portal</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+        <div class="alert alert-{{ 'success' if cat=='success' else 'error' }}"><span>{{ msg }}</span></div>
+        {% endfor %}
+      {% endwith %}
+
+      <form method="POST" id="login-form">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" name="email" class="form-input" placeholder="you@eagle.com" required autofocus>
+        </div>
+        <div class="form-group" style="margin-bottom:26px">
+          <label class="form-label">Password</label>
+          <div style="position:relative">
+            <input type="password" name="password" id="pw-inp" class="form-input" placeholder="Your password" required style="padding-right:44px">
+            <button type="button" onclick="var p=document.getElementById('pw-inp');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'👁':'🙈'" style="position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:15px;color:var(--t3)">👁</button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-gold btn-lg w-full" style="justify-content:center;margin-bottom:12px">
+          Sign In →
+        </button>
+        <a href="{{ url_for('register') }}" class="btn btn-secondary btn-lg w-full" style="justify-content:center">
+          Create Account
+        </a>
+      </form>
+
+      <div class="demo-box" style="margin-top:24px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);margin-bottom:10px">Demo Credentials</div>
+        <div class="demo-row"><span style="font-size:13px;color:var(--t2);font-weight:500">🎓 Trainer</span><span class="demo-cred">trainer@eagle.com / trainer123</span></div>
+        <div style="height:1px;background:var(--border);margin:8px 0"></div>
+        <div class="demo-row"><span style="font-size:13px;color:var(--t2);font-weight:500">👤 Trainee</span><span class="demo-cred">trainee@eagle.com / trainee123</span></div>
+      </div>
+    </div>
+    <button onclick="toggleTheme()" id="theme-btn" class="theme-btn" style="position:fixed;top:20px;right:20px">🌙</button>
+  </div>
+</div>
+<script>
+const T=localStorage.getItem('eagle-theme')||'light';
+document.documentElement.setAttribute('data-theme',T);
+const tb=document.getElementById('theme-btn');
+if(tb) tb.textContent=T==='dark'?'☀️':'🌙';
+function toggleTheme(){const c=document.documentElement.getAttribute('data-theme');const n=c==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('eagle-theme',n);const tb=document.getElementById('theme-btn');if(tb) tb.textContent=n==='dark'?'☀️':'🌙';}
+</script>
+</body></html>

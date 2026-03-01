@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Edit' if module else 'Create' }} Module — Eagle LMS{% endblock %}
+{% block page_title %}{{ 'Edit Module' if module else 'New Training Module' }}{% endblock %}
+{% block content %}
+<div style="max-width:700px">
+  {% if module %}<div style="margin-bottom:16px"><a href="{{ url_for('trainer_module_detail', module_id=module.id) }}" class="btn btn-ghost btn-sm">← Back to Module</a></div>{% endif %}
+  <form method="POST">
+    <div class="card card-padded anim" style="margin-bottom:16px">
+      <div style="font-family:Fraunces,serif;font-weight:600;font-size:15px;color:var(--text-primary);margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">Module Information</div>
+      <div class="form-group">
+        <label class="form-label">Module Title *</label>
+        <input type="text" name="title" class="form-input" placeholder="e.g., Emergency Response Procedures" value="{{ module.title if module else '' }}" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea name="description" class="form-textarea" placeholder="What will trainees learn in this module?">{{ module.description if module else '' }}</textarea>
+      </div>
+      <div class="grid-2">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Start Date & Time *</label>
+          <input type="datetime-local" name="start_datetime" class="form-input" value="{{ module.start_datetime[:16] if module and module.start_datetime else '' }}" required>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">End Date & Time *</label>
+          <input type="datetime-local" name="end_datetime" class="form-input" value="{{ module.end_datetime[:16] if module and module.end_datetime else '' }}" required>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-padded anim anim-d1" style="margin-bottom:24px">
+      <div style="font-family:Fraunces,serif;font-weight:600;font-size:15px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">Publishing</div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-select">
+          <option value="draft" {{ 'selected' if module and module.status == 'draft' else '' }}>Draft — Not visible to trainees</option>
+          <option value="published" {{ 'selected' if module and module.status == 'published' else '' }}>Published — Visible to enrolled trainees</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="flex gap-3 anim anim-d2">
+      <button type="submit" class="btn btn-primary btn-lg">{{ '💾 Save Changes' if module else '🚀 Create Module' }}</button>
+      <a href="{{ url_for('trainer_modules') }}" class="btn btn-secondary btn-lg">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}Trainer Dashboard — Eagle LMS{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('trainer_modules') }}" class="btn btn-gold btn-sm">📋 Manage Modules</a>
+{% endblock %}
+{% block content %}
+<div class="stat-row">
+  {% set now_str = now %}
+  <div class="stat-tile st-gold anim-up">
+    <div class="st-icon st-i-gold">📚</div>
+    <div class="st-num">{{ total_modules }}</div>
+    <div class="st-lbl">Total Modules</div>
+  </div>
+  <div class="stat-tile st-blue anim-up d1">
+    <div class="st-icon st-i-blue">👥</div>
+    <div class="st-num">{{ total_trainees }}</div>
+    <div class="st-lbl">Active Trainees</div>
+  </div>
+  <div class="stat-tile st-green anim-up d2">
+    <div class="st-icon st-i-green">⚡</div>
+    <div class="st-num">{{ ongoing }}</div>
+    <div class="st-lbl">Live Modules</div>
+  </div>
+  <div class="stat-tile st-sky anim-up d3">
+    <div class="st-icon st-i-sky">📅</div>
+    <div class="st-num">{{ upcoming }}</div>
+    <div class="st-lbl">Upcoming</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 320px;gap:22px;align-items:start">
+  <div>
+    <!-- Modules overview -->
+    <div class="sh anim-up d2">
+      <div class="sh-left"><div class="sh-title">Training Modules</div><div class="sh-sub">Click a module to schedule or manage</div></div>
+      <a href="{{ url_for('trainer_modules') }}" class="btn btn-ghost btn-sm">View all →</a>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px">
+    {% for m in modules[:8] %}
+    {% set stats = mod_stats.get(m.id, {}) %}
+    {% set is_live = m.start_datetime and m.end_datetime and m.start_datetime <= now_str <= m.end_datetime %}
+    {% set is_up = m.start_datetime and m.start_datetime > now_str %}
+    <a href="{{ url_for('trainer_module_detail', module_id=m.id) }}" class="anim-up" style="animation-delay:{{ loop.index0 * 40 }}ms">
+      <div class="card card-p card-hover flex items-c gap-4">
+        <div style="width:10px;height:10px;border-radius:50%;background:{{ m.color or '#3B5BDB' }};flex-shrink:0;box-shadow:0 0 8px {{ m.color or '#3B5BDB' }}55"></div>
+        <div style="width:44px;height:44px;background:{{ m.color or '#3B5BDB' }}18;border-radius:var(--r3);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📖</div>
+        <div style="flex:1;overflow:hidden">
+          <div style="font-weight:600;font-size:14.5px;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ m.title }}</div>
+          <div class="t-sm t-secondary">{{ m.category or 'General' }} · {{ stats.get('chapters',0) }} chapters · {{ stats.get('trainees',0) }} enrolled</div>
+        </div>
+        <div class="flex gap-2 items-c">
+          {% if is_live %}<span class="badge b-live badge-dot">Live</span>
+          {% elif is_up %}<span class="badge b-amber">Upcoming</span>
+          {% elif m.status=='published' %}<span class="badge b-neutral">Ended</span>
+          {% else %}<span class="badge b-neutral">Draft</span>{% endif %}
+          {% if m.start_datetime %}
+          <span class="t-xs t-muted" style="display:none;min-width:70px">{{ m.start_datetime[:10] }}</span>
+          {% endif %}
+        </div>
+      </div>
+    </a>
+    {% else %}
+    <div class="card card-p">
+      <div class="empty"><div class="empty-ico">📚</div><div class="empty-title">No modules yet</div><div class="empty-sub">Your 10 default modules will appear here after first setup.</div></div>
+    </div>
+    {% endfor %}
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <!-- Recent enrollments -->
+    <div class="card card-p anim-r d2">
+      <div style="font-family:'DM Serif Display',serif;font-size:16px;margin-bottom:14px">Recent Enrollments</div>
+      {% if recent %}
+      <div class="tl">
+        {% for r in recent %}
+        <div class="tl-item">
+          <div style="font-size:13px;font-weight:600">{{ r.name }}</div>
+          <div class="t-xs t-secondary">{{ r.title }}</div>
+          <div class="t-xs t-muted">{{ r.enrolled_at[:10] }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="text-align:center;padding:20px;color:var(--t3);font-size:13px">No recent enrollments</div>
+      {% endif %}
+    </div>
+
+    <!-- Live now -->
+    <div class="card card-p anim-r d3">
+      <div style="font-family:'DM Serif Display',serif;font-size:16px;margin-bottom:14px">⚡ Live Now</div>
+      {% set live_list = [] %}
+      {% for m in modules %}
+        {% if m.start_datetime and m.end_datetime and m.start_datetime <= now_str <= m.end_datetime %}
+          {% if live_list.append(m) %}{% endif %}
+        {% endif %}
+      {% endfor %}
+      {% if live_list %}
+      {% for m in live_list %}
+      <a href="{{ url_for('trainer_module_detail', module_id=m.id) }}">
+        <div style="padding:10px;background:var(--green-bg);border:1px solid rgba(16,185,129,.25);border-radius:var(--r2);margin-bottom:8px">
+          <div style="font-size:13px;font-weight:600">{{ m.title }}</div>
+          <div class="t-xs t-secondary">Ends: {{ m.end_datetime[:16].replace('T',' ') }}</div>
+        </div>
+      </a>
+      {% endfor %}
+      {% else %}
+      <div style="text-align:center;padding:20px;color:var(--t3);font-size:13px"><div style="font-size:28px;margin-bottom:8px">😴</div>No live sessions right now</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}{{ test.title }} — Eagle LMS{% endblock %}
+{% block page_title %}{{ test.title }}{% endblock %}
+{% block topbar_actions %}
+<div class="timer" id="timer"><span>⏱</span><span id="td">{{ test.duration_minutes }}:00</span></div>
+{% endblock %}
+{% block content %}
+<div style="max-width:740px">
+  <div class="card card-p anim-up mb-6" style="background:linear-gradient(135deg,var(--acc-bg),var(--card));border-color:var(--acc-mid)">
+    <div class="flex items-c gap-4">
+      <div style="width:52px;height:52px;background:var(--acc);border-radius:var(--r3);display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 6px 20px var(--acc-glow);flex-shrink:0">📝</div>
+      <div>
+        <div class="t-xs fw-700 t-muted" style="text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">{{ test.test_type }}-Assessment</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:20px">{{ test.title }}</div>
+        <div class="t-sm t-secondary">{{ questions|length }} questions · {{ test.duration_minutes }} minutes · Pass at {{ test.passing_marks }}%</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step-row anim-up d1">
+    {% for i in range(questions|length) %}
+    <div class="step" id="step-{{ i }}"><div class="step-dot" id="sd-{{ i }}">{{ i+1 }}</div><div class="step-label">Q{{ i+1 }}</div></div>
+    {% endfor %}
+  </div>
+
+  <form method="POST" id="test-form">
+    {% for q in questions %}
+    <div class="q-card anim-up" style="animation-delay:{{ loop.index0 * 40 }}ms">
+      <div class="flex items-c gap-3 mb-4">
+        <div class="q-num-badge">{{ loop.index }}</div>
+        <span class="t-xs t-muted fw-700" style="text-transform:uppercase;letter-spacing:.5px">{{ q.marks }} mark{{ 's' if q.marks > 1 }}</span>
+      </div>
+      <div style="font-size:15.5px;font-weight:600;margin-bottom:18px;line-height:1.5;color:var(--t1)">{{ q.question_text }}</div>
+      {% for key, val in [('A', q.option_a), ('B', q.option_b), ('C', q.option_c), ('D', q.option_d)] %}
+      {% if val %}
+      <label class="opt-label" onclick="stepDone({{ loop.index0 }})">
+        <input type="radio" name="q_{{ q.id }}" value="{{ key }}">
+        <div class="opt-key">{{ key }}</div>
+        <span style="font-size:14px;color:var(--t1);flex:1">{{ val }}</span>
+      </label>
+      {% endif %}
+      {% endfor %}
+    </div>
+    {% endfor %}
+
+    <div class="card card-p flex justify-b items-c anim-up d4 mt-4">
+      <div class="t-sm t-muted">Timer will auto-submit when it reaches 0:00</div>
+      <button type="submit" class="btn btn-gold btn-lg">Submit Test →</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+let rem = {{ test.duration_minutes }} * 60;
+function tick(){
+  const m=Math.floor(rem/60), s=rem%60;
+  document.getElementById('td').textContent = m+':'+(s<10?'0':'')+s;
+  const t=document.getElementById('timer');
+  if(rem<=60) t.className='timer urgent';
+  else if(rem<=180) t.className='timer warn';
+  if(rem-- <= 0){ window.onbeforeunload=null; document.getElementById('test-form').submit(); return; }
+  setTimeout(tick,1000);
+}
+tick();
+
+window.onbeforeunload = () => 'Test in progress. Are you sure you want to leave?';
+document.getElementById('test-form').onsubmit = () => { window.onbeforeunload=null; };
+
+// Progress steps
+const answered = new Set();
+document.querySelectorAll('input[type=radio]').forEach((inp,i)=>{
+  inp.addEventListener('change',()=>{ const q=inp.name; stepDoneByName(q); });
+});
+
+function stepDoneByName(name){
+  // find question index
+  const qs = document.querySelectorAll('.q-card');
+  qs.forEach((card,i)=>{
+    if(card.querySelector('input[name="'+name+'"]')){
+      answered.add(i);
+      const s=document.getElementById('step-'+i);
+      const sd=document.getElementById('sd-'+i);
+      if(s){s.classList.add('done'); if(sd){sd.textContent='✓';}}
+    }
+  });
+}
+
+function stepDone(idx){setTimeout(()=>{answered.add(idx);const s=document.getElementById('step-'+idx);const sd=document.getElementById('sd-'+idx);if(s)s.classList.add('done');if(sd)sd.textContent='✓';},100);}
+</script>
+{% endblock %}

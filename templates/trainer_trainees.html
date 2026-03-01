@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Trainees — Eagle LMS{% endblock %}
+{% block page_title %}All Trainees{% endblock %}
+{% block content %}
+<div class="stat-row anim-up" style="margin-bottom:24px">
+  <div class="stat-tile st-blue"><div class="st-icon st-i-blue">👥</div><div class="st-num">{{ trainees|length }}</div><div class="st-lbl">Registered Trainees</div></div>
+</div>
+<div class="card tbl-wrap anim-up d1">
+  {% if trainees %}
+  <table>
+    <thead><tr><th>Name</th><th>Email</th><th>Department</th><th>Phone</th><th>Enrolled</th><th>Tests</th><th>Joined</th></tr></thead>
+    <tbody>
+      {% for t in trainees %}
+      <tr>
+        <td><div class="flex items-c gap-2"><div class="ava ava-sm">{{ t.name[0].upper() }}</div><div style="font-weight:600">{{ t.name }}</div></div></td>
+        <td class="t-secondary t-sm">{{ t.email }}</td>
+        <td><span class="badge b-blue">{{ t.department or 'Unassigned' }}</span></td>
+        <td class="t-sm t-secondary">{{ t.phone or '—' }}</td>
+        <td class="center"><span class="badge b-neutral">{{ t.enrolled }}</span></td>
+        <td class="center"><span class="badge b-gold">{{ t.attempts }}</span></td>
+        <td class="t-muted t-xs">{{ t.created_at[:10] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty"><div class="empty-ico">👥</div><div class="empty-title">No Trainees Yet</div><div class="empty-sub">Trainees appear here once they register on the platform.</div></div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Notifications — Eagle LMS{% endblock %}
+{% block page_title %}Notifications{% endblock %}
+{% block content %}
+<div style="max-width:680px">
+  <div class="flex justify-b items-c mb-6 anim-up">
+    <div class="sh-title">All Notifications</div>
+    <form method="POST" action="/api/notifications/mark-read-all">
+      <button type="submit" class="btn btn-ghost btn-sm">✓ Mark all read</button>
+    </form>
+  </div>
+
+  <div class="card">
+    {% if notifs %}
+    {% for n in notifs %}
+    {% set icons = {'info':'ℹ️','welcome':'🎉','module_published':'📚','material_upload':'📎','test_created':'📝'} %}
+    {% set colors = {'info':'var(--sky-bg)','welcome':'var(--eagle-gold-bg)','module_published':'var(--acc-bg)','material_upload':'var(--green-bg)','test_created':'var(--violet-bg)'} %}
+    <a href="{{ n.link or '#' }}" class="anim-up" style="animation-delay:{{ loop.index0 * 30 }}ms">
+      <div class="notif-page-item {% if not n.is_read %}unread{% endif %}">
+        <div class="npi-ico" style="background:{{ colors.get(n.type, 'var(--card2)') }}">{{ icons.get(n.type, '🔔') }}</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:{% if not n.is_read %}700{% else %}500{% endif %}">{{ n.title }}</div>
+          <div class="t-sm t-secondary" style="margin-top:3px">{{ n.body }}</div>
+          <div class="t-xs t-muted" style="margin-top:5px">{{ n.created_at[:16].replace('T',' ') }}</div>
+        </div>
+        {% if not n.is_read %}<div style="width:8px;height:8px;background:var(--acc);border-radius:50%;flex-shrink:0;margin-top:6px"></div>{% endif %}
+      </div>
+    </a>
+    {% endfor %}
+    {% else %}
+    <div class="empty" style="padding:56px"><div class="empty-ico">🔔</div><div class="empty-title">All caught up!</div><div class="empty-sub">No notifications yet. They'll appear here when your trainer publishes modules or uploads materials.</div></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
