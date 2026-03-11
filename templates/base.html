@@ -14,7 +14,7 @@
   <!-- ═══ SIDEBAR ═══ -->
   <aside class="sidebar" id="sidebar">
     <div class="sb-brand">
-      <div class="sb-logo">🦅</div>
+      <div class="sb-logo" style="font-size:18px;font-weight:800;letter-spacing:-1px">E</div>
       <div>
         <div class="sb-title">Eagle LMS</div>
         <div class="sb-sub">Training Portal</div>
@@ -33,47 +33,47 @@
       {% if session.role == 'trainer' %}
         <div class="sb-group">Overview</div>
         <a href="{{ url_for('trainer_dashboard') }}" class="sb-link {% if request.endpoint=='trainer_dashboard' %}active{% endif %}">
-          <span class="sb-icon">⊞</span> Dashboard
+          <span class="sb-icon">&#9632;</span> Dashboard
         </a>
 
         <div class="sb-group">Modules</div>
         <a href="{{ url_for('trainer_modules') }}" class="sb-link {% if request.endpoint in ['trainer_modules','trainer_module_detail','edit_module'] %}active{% endif %}">
-          <span class="sb-icon">◫</span> All Modules
+          <span class="sb-icon">&#9711;</span> All Modules
         </a>
 
         <div class="sb-group">People</div>
         <a href="{{ url_for('trainer_trainees') }}" class="sb-link {% if request.endpoint=='trainer_trainees' %}active{% endif %}">
-          <span class="sb-icon">◎</span> Trainees
+          <span class="sb-icon">&#9675;</span> Trainees
         </a>
 
       {% else %}
         <div class="sb-group">Overview</div>
         <a href="{{ url_for('trainee_dashboard') }}" class="sb-link {% if request.endpoint=='trainee_dashboard' %}active{% endif %}">
-          <span class="sb-icon">⊞</span> Dashboard
+          <span class="sb-icon">&#9632;</span> Dashboard
         </a>
         <a href="{{ url_for('notifications') }}" class="sb-link {% if request.endpoint=='notifications' %}active{% endif %}">
-          <span class="sb-icon">🔔</span> Notifications
+          <span class="sb-icon">&#9679;</span> Notifications
           {% if notif_count > 0 %}<span class="sb-notif-badge">{{ notif_count }}</span>{% endif %}
         </a>
         <a href="{{ url_for('trainee_calendar') }}" class="sb-link {% if request.endpoint=='trainee_calendar' %}active{% endif %}">
-          <span class="sb-icon">⊟</span> Calendar
+          <span class="sb-icon">&#9633;</span> Calendar
         </a>
 
         <div class="sb-group">Learning</div>
         <a href="{{ url_for('trainee_dashboard') }}" class="sb-link">
-          <span class="sb-icon">◫</span> My Modules
+          <span class="sb-icon">&#9711;</span> My Modules
         </a>
 
         <div class="sb-group">Account</div>
         <a href="{{ url_for('trainee_profile') }}" class="sb-link {% if request.endpoint=='trainee_profile' %}active{% endif %}">
-          <span class="sb-icon">◎</span> My Profile
+          <span class="sb-icon">&#9675;</span> My Profile
         </a>
       {% endif %}
     </nav>
 
     <div class="sb-bottom">
-      <button class="sb-action" onclick="toggleTheme()" id="sb-theme">🌙 Dark Mode</button>
-      <a href="{{ url_for('logout') }}" class="sb-action danger">↩ Sign Out</a>
+      <button class="sb-action" onclick="toggleTheme()" id="sb-theme">Dark Mode</button>
+      <a href="{{ url_for('logout') }}" class="sb-action danger">Sign Out</a>
     </div>
   </aside>
 
@@ -89,7 +89,7 @@
         {% if session.role == 'trainee' %}
         <div style="position:relative">
           <button class="notif-bell" id="notif-btn" onclick="toggleNotifDrop()" title="Notifications">
-            🔔
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
             <span class="notif-dot" id="notif-dot" style="display:{% if notif_count > 0 %}block{% else %}none{% endif %}"></span>
           </button>
           <div class="notif-drop" id="notif-drop">
@@ -100,12 +100,12 @@
             <div id="nd-items">
               <div style="padding:24px;text-align:center;color:var(--t3);font-size:13px">Loading...</div>
             </div>
-            <div class="nd-footer"><a href="{{ url_for('notifications') }}">View all notifications →</a></div>
+            <div class="nd-footer"><a href="{{ url_for('notifications') }}">View all notifications &rarr;</a></div>
           </div>
         </div>
         {% endif %}
 
-        <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
+        <button class="theme-btn" onclick="toggleTheme()" id="theme-btn" title="Toggle theme">&#9680;</button>
       </div>
     </header>
 
@@ -133,8 +133,8 @@ const T = localStorage.getItem('eagle-theme') || 'light';
 document.documentElement.setAttribute('data-theme', T);
 const tbtn = document.getElementById('theme-btn');
 const sbtn = document.getElementById('sb-theme');
-if(tbtn) tbtn.textContent = T==='dark'?'☀️':'🌙';
-if(sbtn) sbtn.textContent = T==='dark'?'☀️ Light Mode':'🌙 Dark Mode';
+if(tbtn) tbtn.textContent = T==='dark'?'☀':'◑';
+if(sbtn) sbtn.textContent = T==='dark'?'Light Mode':'Dark Mode';
 
 function toggleTheme(){
   const c = document.documentElement.getAttribute('data-theme');
@@ -142,8 +142,8 @@ function toggleTheme(){
   document.documentElement.setAttribute('data-theme',n);
   localStorage.setItem('eagle-theme',n);
   const tb=document.getElementById('theme-btn'), sb=document.getElementById('sb-theme');
-  if(tb) tb.textContent = n==='dark'?'☀️':'🌙';
-  if(sb) sb.textContent = n==='dark'?'☀️ Light Mode':'🌙 Dark Mode';
+  if(tb) tb.textContent = n==='dark'?'☀':'◑';
+  if(sb) sb.textContent = n==='dark'?'Light Mode':'Dark Mode';
 }
 
 // Mobile menu
@@ -179,12 +179,12 @@ function loadNotifs(){
       el.innerHTML='<div style="padding:24px;text-align:center;color:var(--t3);font-size:13px">🎉 All caught up!</div>';
       return;
     }
-    const icons={'info':'ℹ️','welcome':'🎉','module_published':'📚','material_upload':'📎','test_created':'📝'};
+    const icons={'info':'i','welcome':'w','module_published':'m','material_upload':'f','test_created':'t'};
     const colors={'info':'var(--sky-bg)','welcome':'var(--eagle-gold-bg)','module_published':'var(--acc-bg)','material_upload':'var(--green-bg)','test_created':'var(--violet-bg)'};
     el.innerHTML = data.items.map(n=>`
       <div class="nd-item ${n.is_read?'':'unread'}" onclick="window.location='${n.link||'/notifications'}'">
-        <div class="nd-item-icon" style="background:${colors[n.type]||'var(--card2)'}">
-          ${icons[n.type]||'🔔'}
+        <div class="nd-item-icon" style="background:${colors[n.type]||'var(--card2)'};font-size:11px;font-weight:700;color:var(--acc)">
+          ${icons[n.type]||'!'}
         </div>
         <div>
           <div class="nd-item-title">${n.title}</div>

@@ -2,54 +2,60 @@
 {% block title %}My Profile — Eagle LMS{% endblock %}
 {% block page_title %}My Profile{% endblock %}
 {% block content %}
-<div style="display:grid;grid-template-columns:300px 1fr;gap:22px;align-items:start">
+<div style="display:grid;grid-template-columns:280px 1fr;gap:22px;align-items:start">
   <div>
-    <!-- Profile Card with picture upload -->
-    <div class="card card-p anim-up center mb-4" style="position:relative">
+    <!-- Profile Card -->
+    <div class="card card-p anim-up center mb-4" style="padding:28px 20px">
       <div style="position:relative;display:inline-block;margin:0 auto 16px;cursor:pointer" onclick="document.getElementById('pic-input').click()">
         {% if user.profile_pic %}
-          <img src="/uploads/{{ user.profile_pic }}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--acc)" alt="Profile">
+          <img src="/uploads/{{ user.profile_pic }}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--border)" alt="Profile">
         {% else %}
           <div class="ava ava-lg" style="margin:0 auto">{{ user.name[0].upper() }}</div>
         {% endif %}
-        <div style="position:absolute;bottom:0;right:0;background:var(--acc);border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;border:2px solid var(--card)">📷</div>
+        <div style="position:absolute;bottom:0;right:0;background:var(--acc);border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;border:2px solid var(--card);font-weight:700">+</div>
       </div>
       <form method="POST" action="/trainee/profile/upload-pic" enctype="multipart/form-data" id="pic-form">
         <input type="file" id="pic-input" name="profile_pic" accept=".jpg,.jpeg,.png,.webp" style="display:none" onchange="document.getElementById('pic-form').submit()">
       </form>
-      <div style="font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:4px">{{ user.name }}</div>
-      <div class="t-sm t-muted mb-4" style="text-transform:capitalize">{{ user.role }}</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:19px;margin-bottom:3px">{{ user.name }}</div>
+      <div class="t-sm t-muted mb-3" style="text-transform:capitalize">{{ user.role }}</div>
       <span class="badge b-gold">{{ user.department or 'Eagle Security' }}</span>
-      <div class="t-xs t-muted" style="margin-top:10px">Click photo to change picture</div>
+      <div class="t-xs t-muted" style="margin-top:8px">Click avatar to update photo</div>
     </div>
 
-    <div class="stat-row anim-up d1" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-      <div class="stat-tile st-blue" style="padding:16px"><div class="st-num" style="font-size:28px">{{ total_enrolled }}</div><div class="st-lbl">Enrolled</div></div>
-      <div class="stat-tile st-green" style="padding:16px"><div class="st-num" style="font-size:28px">{{ total_completed }}</div><div class="st-lbl">Completed</div></div>
+    <div class="stat-row anim-up d1" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div class="stat-tile st-blue" style="padding:14px">
+        <div class="st-num" style="font-size:26px">{{ total_enrolled }}</div>
+        <div class="st-lbl">Enrolled</div>
+      </div>
+      <div class="stat-tile st-green" style="padding:14px">
+        <div class="st-num" style="font-size:26px">{{ total_completed }}</div>
+        <div class="st-lbl">Completed</div>
+      </div>
     </div>
 
     {% if avg_score %}
-    <div class="card card-p anim-up d2" style="text-align:center;margin-bottom:10px">
-      <div class="t-xs t-muted fw-700" style="text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Avg Test Score</div>
-      <div style="font-family:'DM Serif Display',serif;font-size:36px;color:{% if avg_score >= 60 %}var(--green){% else %}var(--amber){% endif %}">{{ avg_score }}%</div>
+    <div class="card card-p anim-up d2" style="text-align:center;margin-bottom:10px;padding:16px">
+      <div class="t-xs t-muted" style="text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;font-weight:600">Avg Test Score</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:34px;color:{% if avg_score >= 60 %}var(--green){% else %}var(--amber){% endif %}">{{ avg_score }}%</div>
     </div>
     {% endif %}
 
     <div class="card card-p anim-up d3">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);margin-bottom:12px">Account Info</div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);margin-bottom:12px">Contact</div>
       <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
-        <div class="flex items-c gap-3"><span class="t-muted">📧</span><span>{{ user.email }}</span></div>
-        <div class="flex items-c gap-3"><span class="t-muted">📱</span><span>{{ user.phone or '—' }}</span></div>
-        <div class="flex items-c gap-3"><span class="t-muted">🏢</span><span>{{ user.department or '—' }}</span></div>
-        <div class="flex items-c gap-3"><span class="t-muted">📅</span><span>Joined {{ user.created_at[:10] }}</span></div>
+        <div class="flex items-c gap-3"><span style="color:var(--t3);width:14px;font-size:11px">@</span><span>{{ user.email }}</span></div>
+        <div class="flex items-c gap-3"><span style="color:var(--t3);width:14px;font-size:11px">P</span><span>{{ user.phone or '—' }}</span></div>
+        <div class="flex items-c gap-3"><span style="color:var(--t3);width:14px;font-size:11px">D</span><span>{{ user.department or '—' }}</span></div>
+        <div class="flex items-c gap-3"><span style="color:var(--t3);width:14px;font-size:11px">J</span><span>{{ user.created_at[:10] }}</span></div>
       </div>
     </div>
   </div>
 
   <div>
-    <!-- Edit Profile Form -->
+    <!-- Edit Profile -->
     <div class="card card-p anim-r mb-4">
-      <div style="font-family:'DM Serif Display',serif;font-size:17px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">✏️ Edit Profile</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:16px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border)">Edit Profile</div>
       <form method="POST" action="/trainee/profile/update">
         <div class="g2">
           <div class="form-group col2">
@@ -69,20 +75,18 @@
             <input type="text" name="department" class="form-input" value="{{ user.department or '' }}" placeholder="e.g., Security Operations">
           </div>
         </div>
-        <div class="flex gap-3" style="margin-top:6px">
-          <button type="submit" class="btn btn-primary btn-md">💾 Save Changes</button>
-        </div>
+        <button type="submit" class="btn btn-primary btn-md">Save Changes</button>
       </form>
     </div>
 
     <!-- Change Password -->
     <div class="card card-p anim-r d1 mb-4">
-      <div style="font-family:'DM Serif Display',serif;font-size:17px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">🔒 Change Password</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:16px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border)">Change Password</div>
       <form method="POST" action="/trainee/profile/change-password">
         <div class="g2">
           <div class="form-group col2">
             <label class="form-label">Current Password *</label>
-            <input type="password" name="current_password" class="form-input" placeholder="Enter current password" required>
+            <input type="password" name="current_password" class="form-input" placeholder="Current password" required>
           </div>
           <div class="form-group">
             <label class="form-label">New Password *</label>
@@ -93,28 +97,28 @@
             <input type="password" name="confirm_password" class="form-input" id="cp" placeholder="Repeat new password" required>
           </div>
         </div>
-        <div id="pw-match-msg" style="font-size:12px;margin-bottom:10px"></div>
-        <button type="submit" class="btn btn-gold btn-md" id="pw-submit">🔑 Update Password</button>
+        <div id="pw-msg" style="font-size:12px;margin-bottom:10px;min-height:18px"></div>
+        <button type="submit" class="btn btn-gold btn-md" id="pw-btn">Update Password</button>
       </form>
     </div>
 
     <!-- Test History -->
-    <div class="sh anim-r d2 mb-4"><div class="sh-title">📊 Test History</div></div>
+    <div class="sh anim-r d2 mb-4"><div class="sh-title">Test History</div></div>
     {% if attempts %}
     <div style="display:flex;flex-direction:column;gap:10px">
       {% for att in attempts %}
       <div class="card card-p" style="border-left:3px solid {% if att.passed %}var(--green){% else %}var(--red){% endif %}">
         <div class="flex justify-b items-s gap-3">
           <div style="flex:1;overflow:hidden">
-            <div style="font-weight:700;font-size:14.5px;margin-bottom:3px">{{ att.test_title }}</div>
-            <div class="t-sm t-secondary mb-4">{{ att.module_title }}</div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:3px">{{ att.test_title }}</div>
+            <div class="t-sm t-secondary mb-3">{{ att.module_title }}</div>
             <div class="flex gap-3 items-c flex-wrap">
               <span class="t-xs t-muted">{{ att.started_at[:16].replace('T',' ') }}</span>
               <span class="badge {% if att.test_type=='pre'%}b-sky{% else %}b-violet{% endif %}" style="font-size:9px">{{ att.test_type }}-test</span>
             </div>
           </div>
           <div class="center" style="flex-shrink:0">
-            <div style="font-family:'DM Serif Display',serif;font-size:32px;color:{% if att.passed %}var(--green){% else %}var(--red){% endif %}">{{ att.percentage|int }}%</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:30px;color:{% if att.passed %}var(--green){% else %}var(--red){% endif %}">{{ att.percentage|int }}%</div>
             <div class="t-xs t-muted">{{ att.score }}/{{ att.total_marks }}</div>
             <span class="badge {% if att.passed %}b-green{% else %}b-red{% endif %}" style="margin-top:4px">{{ 'PASS' if att.passed else 'FAIL' }}</span>
           </div>
@@ -123,18 +127,18 @@
       {% endfor %}
     </div>
     {% else %}
-    <div class="card card-p"><div class="empty"><div class="empty-ico">📊</div><div class="empty-title">No Tests Taken Yet</div><div class="empty-sub">Your test history will appear here once you take your first assessment.</div></div></div>
+    <div class="card card-p"><div class="empty"><div class="empty-ico" style="font-size:24px;margin-bottom:8px">—</div><div class="empty-title">No Tests Taken Yet</div><div class="empty-sub">Your test history will appear here once you take your first assessment.</div></div></div>
     {% endif %}
   </div>
 </div>
 {% endblock %}
 {% block scripts %}
 <script>
-const np=document.getElementById('np'), cp=document.getElementById('cp'), msg=document.getElementById('pw-match-msg'), btn=document.getElementById('pw-submit');
+const np=document.getElementById('np'),cp=document.getElementById('cp'),msg=document.getElementById('pw-msg'),btn=document.getElementById('pw-btn');
 function checkPw(){
   if(!cp.value){msg.textContent='';return;}
-  if(np.value===cp.value){msg.style.color='var(--green)';msg.textContent='✅ Passwords match';btn.disabled=false;}
-  else{msg.style.color='var(--red)';msg.textContent='❌ Passwords do not match';btn.disabled=true;}
+  if(np.value===cp.value){msg.style.color='var(--green)';msg.textContent='Passwords match';btn.disabled=false;}
+  else{msg.style.color='var(--red)';msg.textContent='Passwords do not match';btn.disabled=true;}
 }
 np.addEventListener('input',checkPw);
 cp.addEventListener('input',checkPw);

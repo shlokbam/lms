@@ -2,148 +2,147 @@
 {% block title %}My Dashboard — Eagle LMS{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
 {% block topbar_actions %}
-<a href="{{ url_for('trainee_calendar') }}" class="btn btn-ghost btn-sm">📅 Calendar</a>
+<a href="{{ url_for('trainee_calendar') }}" class="btn btn-ghost btn-sm">Calendar</a>
 {% endblock %}
 {% block content %}
 
 <div class="stat-row">
   <div class="stat-tile st-blue anim-up">
-    <div class="st-icon st-i-blue">📚</div>
+    <div class="st-icon st-i-blue" style="font-size:16px;font-weight:700">E</div>
     <div class="st-num">{{ (upcoming|length) + (ongoing|length) + (completed|length) }}</div>
     <div class="st-lbl">Enrolled</div>
   </div>
   <div class="stat-tile st-green anim-up d1">
-    <div class="st-icon st-i-green">⚡</div>
+    <div class="st-icon st-i-green" style="font-size:16px;font-weight:700">L</div>
     <div class="st-num">{{ ongoing|length }}</div>
     <div class="st-lbl">Live Now</div>
   </div>
   <div class="stat-tile st-gold anim-up d2">
-    <div class="st-icon st-i-gold">📅</div>
+    <div class="st-icon st-i-gold" style="font-size:16px;font-weight:700">U</div>
     <div class="st-num">{{ upcoming|length }}</div>
     <div class="st-lbl">Upcoming</div>
   </div>
   <div class="stat-tile st-sky anim-up d3">
-    <div class="st-icon st-i-sky">✅</div>
+    <div class="st-icon st-i-sky" style="font-size:13px;font-weight:700">P</div>
     <div class="st-num">{{ passed_tests }}/{{ total_tests }}</div>
     <div class="st-lbl">Tests Passed</div>
   </div>
 </div>
 
-<div style="display:grid;grid-template-columns:1fr 300px;gap:22px;align-items:start">
-  <div>
+<!-- Filter tabs -->
+<div style="display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--border)">
+  <button class="filter-tab active" onclick="filterMods('all',this)">All ({{ (upcoming|length)+(ongoing|length)+(completed|length) }})</button>
+  <button class="filter-tab" onclick="filterMods('live',this)">Live ({{ ongoing|length }})</button>
+  <button class="filter-tab" onclick="filterMods('upcoming',this)">Upcoming ({{ upcoming|length }})</button>
+  <button class="filter-tab" onclick="filterMods('ended',this)">Ended ({{ completed|length }})</button>
+</div>
 
-    {% if ongoing %}
-    <div class="sh anim-up d1 mb-3">
-      <div class="sh-title" style="color:var(--green)">⚡ Live Now</div>
-      <span class="badge b-live badge-dot">{{ ongoing|length }} active</span>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">
+<div style="display:grid;grid-template-columns:1fr 280px;gap:22px;align-items:start">
+  <div>
+    <div style="display:flex;flex-direction:column;gap:8px" id="mod-list">
+
       {% for m in ongoing %}
-      <a href="{{ url_for('trainee_module', module_id=m.id) }}" class="anim-up" style="animation-delay:{{ loop.index0 * 40 }}ms">
+      <a href="{{ url_for('trainee_module', module_id=m.id) }}" class="tm-card anim-up" data-state="live">
         <div class="card card-p card-hover" style="border-left:3px solid {{ m.color or 'var(--green)' }};background:linear-gradient(135deg,var(--green-bg),var(--card))">
           <div class="flex justify-b items-c gap-3" style="flex-wrap:wrap">
-            <div style="flex:1;overflow:hidden">
-              <div class="flex items-c gap-2 mb-1">
+            <div style="flex:1;min-width:0">
+              <div class="flex items-c gap-2 mb-2">
                 <span class="badge b-live badge-dot" style="font-size:9px">LIVE</span>
-                <span class="badge b-gold" style="font-size:9px">{{ m.category or 'General' }}</span>
+                <span class="badge b-neutral" style="font-size:9px">{{ m.category or 'General' }}</span>
               </div>
-              <div style="font-weight:700;font-size:15px;margin-bottom:5px">{{ m.title }}</div>
-              <div style="font-size:12px;color:var(--t2);display:flex;gap:14px;flex-wrap:wrap">
-                <span>🟢 <strong>START:</strong> {{ m.start_datetime[:16].replace('T',' ') if m.start_datetime else '—' }}</span>
-                <span>🔴 <strong>END:</strong>&nbsp;&nbsp; {{ m.end_datetime[:16].replace('T',' ') if m.end_datetime else '—' }}</span>
+              <div style="font-weight:700;font-size:14.5px;margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ m.title }}</div>
+              <div style="font-size:11.5px;color:var(--t2);display:flex;gap:16px;flex-wrap:wrap">
+                <span>Start: {{ m.start_datetime[:16].replace('T',' ') if m.start_datetime else '—' }}</span>
+                <span>End: {{ m.end_datetime[:16].replace('T',' ') if m.end_datetime else '—' }}</span>
               </div>
             </div>
-            <div style="flex-shrink:0;font-size:13px;font-weight:600;color:var(--green)">Open →</div>
+            <div style="font-size:12px;font-weight:600;color:var(--green);flex-shrink:0">Open &rarr;</div>
           </div>
         </div>
       </a>
       {% endfor %}
-    </div>
-    {% endif %}
 
-    {% if upcoming %}
-    <div class="sh anim-up d2 mb-3">
-      <div class="sh-title">📅 Upcoming Modules</div>
-      <span class="t-sm t-muted">{{ upcoming|length }} scheduled</span>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">
       {% for m in upcoming %}
-      <a href="{{ url_for('trainee_module', module_id=m.id) }}" class="anim-up" style="animation-delay:{{ loop.index0 * 40 }}ms">
+      <a href="{{ url_for('trainee_module', module_id=m.id) }}" class="tm-card anim-up" data-state="upcoming">
         <div class="card card-p card-hover" style="border-left:3px solid {{ m.color or 'var(--acc)' }}">
           <div class="flex justify-b items-c gap-3" style="flex-wrap:wrap">
-            <div style="flex:1;overflow:hidden">
-              <div class="flex items-c gap-2 mb-1">
+            <div style="flex:1;min-width:0">
+              <div class="flex items-c gap-2 mb-2">
                 <span class="badge b-sky" style="font-size:9px">UPCOMING</span>
                 <span class="badge b-neutral" style="font-size:9px">{{ m.category or 'General' }}</span>
               </div>
-              <div style="font-weight:700;font-size:15px;margin-bottom:5px">{{ m.title }}</div>
-              <div style="font-size:12px;color:var(--t2);display:flex;gap:14px;flex-wrap:wrap">
-                <span>🟢 <strong>START:</strong> {{ m.start_datetime[:16].replace('T',' ') if m.start_datetime else '—' }}</span>
-                <span>🔴 <strong>END:</strong>&nbsp;&nbsp; {{ m.end_datetime[:16].replace('T',' ') if m.end_datetime else '—' }}</span>
+              <div style="font-weight:600;font-size:14.5px;margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ m.title }}</div>
+              <div style="font-size:11.5px;color:var(--t2);display:flex;gap:16px;flex-wrap:wrap">
+                <span>Start: {{ m.start_datetime[:16].replace('T',' ') if m.start_datetime else '—' }}</span>
+                <span>End: {{ m.end_datetime[:16].replace('T',' ') if m.end_datetime else '—' }}</span>
               </div>
             </div>
-            <div style="flex-shrink:0;font-size:13px;color:var(--t3)">Preview →</div>
+            <div style="font-size:12px;color:var(--t3);flex-shrink:0">Preview &rarr;</div>
           </div>
         </div>
       </a>
       {% endfor %}
-    </div>
-    {% endif %}
 
-    {% if completed %}
-    <div class="sh anim-up d3 mb-3">
-      <div class="sh-title">🏁 Ended Modules</div>
-      <span class="t-sm t-muted">{{ completed|length }}</span>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:10px">
       {% for m in completed %}
-      <a href="{{ url_for('trainee_module', module_id=m.id) }}" class="anim-up" style="animation-delay:{{ loop.index0 * 40 }}ms">
-        <div class="card card-p card-hover" style="border-left:3px solid var(--border);opacity:.85">
+      <a href="{{ url_for('trainee_module', module_id=m.id) }}" class="tm-card anim-up" data-state="ended">
+        <div class="card card-p card-hover" style="border-left:3px solid var(--border);opacity:.8">
           <div class="flex justify-b items-c gap-3" style="flex-wrap:wrap">
-            <div style="flex:1;overflow:hidden">
-              <div class="flex items-c gap-2 mb-1">
+            <div style="flex:1;min-width:0">
+              <div class="flex items-c gap-2 mb-2">
                 <span class="badge b-neutral" style="font-size:9px">ENDED</span>
                 <span class="badge b-neutral" style="font-size:9px">{{ m.category or 'General' }}</span>
               </div>
-              <div style="font-weight:600;font-size:14px;margin-bottom:5px">{{ m.title }}</div>
-              <div style="font-size:12px;color:var(--t3);display:flex;gap:14px;flex-wrap:wrap">
-                <span>🟢 <strong>START:</strong> {{ m.start_datetime[:16].replace('T',' ') if m.start_datetime else '—' }}</span>
-                <span>🔴 <strong>END:</strong>&nbsp;&nbsp; {{ m.end_datetime[:16].replace('T',' ') if m.end_datetime else '—' }}</span>
+              <div style="font-weight:600;font-size:14px;margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ m.title }}</div>
+              <div style="font-size:11.5px;color:var(--t3);display:flex;gap:16px;flex-wrap:wrap">
+                <span>Start: {{ m.start_datetime[:16].replace('T',' ') if m.start_datetime else '—' }}</span>
+                <span>End: {{ m.end_datetime[:16].replace('T',' ') if m.end_datetime else '—' }}</span>
               </div>
             </div>
-            <div style="flex-shrink:0;font-size:13px;color:var(--t3)">Review →</div>
+            <div style="font-size:12px;color:var(--t3);flex-shrink:0">Review &rarr;</div>
           </div>
         </div>
       </a>
       {% endfor %}
+
+      {% if not ongoing and not upcoming and not completed %}
+      <div class="card card-p"><div class="empty"><div class="empty-ico" style="font-size:28px;margin-bottom:8px">—</div><div class="empty-title">No modules yet</div><div class="empty-sub">Your trainer hasn't published any modules yet.</div></div></div>
+      {% endif %}
     </div>
-    {% endif %}
-
-    {% if not ongoing and not upcoming and not completed %}
-    <div class="card card-p"><div class="empty"><div class="empty-ico">📚</div><div class="empty-title">No Modules Yet</div><div class="empty-sub">Your trainer hasn't published any modules yet.</div></div></div>
-    {% endif %}
-
   </div>
 
   <div>
-    <div class="sh mb-4 anim-r d1"><div class="sh-title">🔔 Notifications</div></div>
+    <div style="font-family:'DM Serif Display',serif;font-size:15px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)">Notifications</div>
     {% if notifications %}
     <div style="display:flex;flex-direction:column;gap:8px">
       {% for n in notifications %}
-      <div class="card card-p anim-r" style="animation-delay:{{ loop.index0 * 40 }}ms;padding:12px 14px;border-left:3px solid var(--acc)">
-        <div style="font-weight:600;font-size:13px;margin-bottom:3px">{{ n.title }}</div>
+      <div class="card anim-r" style="padding:12px 14px;border-left:2px solid var(--acc);animation-delay:{{ loop.index0 * 40 }}ms">
+        <div style="font-weight:600;font-size:13px;margin-bottom:2px">{{ n.title }}</div>
         <div class="t-xs t-secondary">{{ n.body or '' }}</div>
-        <div class="t-xs t-muted" style="margin-top:5px">{{ n.created_at[:16].replace('T',' ') }}</div>
+        <div class="t-xs t-muted" style="margin-top:4px">{{ n.created_at[:16].replace('T',' ') }}</div>
       </div>
       {% endfor %}
-      <a href="{{ url_for('notifications') }}" class="btn btn-ghost btn-sm" style="justify-content:center;margin-top:4px">View all →</a>
+      <a href="{{ url_for('notifications') }}" class="btn btn-ghost btn-sm" style="justify-content:center;margin-top:4px">View all</a>
     </div>
     {% else %}
-    <div class="card card-p" style="text-align:center;padding:32px">
-      <div style="font-size:28px;margin-bottom:8px">🎉</div>
-      <div class="t-sm t-muted">All caught up!</div>
+    <div class="card card-p" style="text-align:center;padding:28px">
+      <div class="t-sm t-muted">All caught up</div>
     </div>
     {% endif %}
   </div>
 </div>
+
+<style>
+.filter-tab{background:none;border:none;border-bottom:2px solid transparent;padding:8px 14px;font-size:13px;font-weight:500;color:var(--t3);cursor:pointer;transition:all .15s;margin-bottom:-1px}
+.filter-tab:hover{color:var(--t1)}
+.filter-tab.active{color:var(--acc);border-bottom-color:var(--acc);font-weight:600}
+</style>
+<script>
+function filterMods(state, btn){
+  document.querySelectorAll('.filter-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tm-card').forEach(c=>{
+    c.style.display = (state==='all' || c.dataset.state===state) ? '' : 'none';
+  });
+}
+</script>
 {% endblock %}

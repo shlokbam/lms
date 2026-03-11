@@ -548,6 +548,7 @@ def trainee_module(module_id):
     db=get_db(); uid=session['user_id']
     module=db.execute('SELECT * FROM modules WHERE id=?',(module_id,)).fetchone()
     if not module: abort(404)
+    if module['status'] != 'published': flash('This module is not currently available.','error'); return redirect(url_for('trainee_dashboard'))
     enrollment=db.execute('SELECT * FROM enrollments WHERE module_id=? AND trainee_id=?',(module_id,uid)).fetchone()
     if not enrollment: flash('Not enrolled.','error'); return redirect(url_for('trainee_dashboard'))
     now=datetime.datetime.now().isoformat()
@@ -574,7 +575,8 @@ def trainee_module(module_id):
     overall_pct=int(done_mats/total_mats*100) if total_mats>0 else 0
     return render_template('trainee_module.html',module=module,phase=phase,chapters=chapters,
         mat_by_chapter=mat_by_chapter,tests=tests,progress_map=progress_map,
-        attempts_map=attempts_map,overall_pct=overall_pct,total_mats=total_mats,done_mats=done_mats)
+        attempts_map=attempts_map,overall_pct=overall_pct,total_mats=total_mats,done_mats=done_mats,
+        now_iso=now)
 
 @app.route('/trainee/test/<int:test_id>',methods=['GET','POST'])
 @login_required
@@ -745,7 +747,7 @@ def edit_test(module_id, test_id):
         db.commit()
         flash('Test updated!','success')
         return redirect(url_for('trainer_module_detail', module_id=module_id))
-    questions=db.execute('SELECT * FROM questions WHERE test_id=? ORDER BY id',(test_id,)).fetchall()
+    questions=[dict(q) for q in db.execute('SELECT * FROM questions WHERE test_id=? ORDER BY id',(test_id,)).fetchall()]
     return render_template('edit_test.html', module=module, test=test, questions=questions)
 
 if __name__=='__main__':

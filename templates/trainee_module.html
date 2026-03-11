@@ -116,56 +116,104 @@
 
   <!-- TESTS sidebar -->
   <div>
-    <div class="sh mb-4 anim-r d1"><div class="sh-title">📝 Tests</div></div>
+    <div class="sh mb-4 anim-r d1"><div class="sh-title">Tests</div></div>
     {% for test in tests %}
     {% set att = attempts_map.get(test.id) %}
-    {# Test window access logic:
-       pre-test  → available ONLY before module starts (phase == 'pre' or 'upcoming')
-       post-test → available ONLY after module ends (phase == 'post')
-       mid-test  → available ONLY during live session (phase == 'live')
-       Also check the test's own start/end datetime window
+
+    {#
+      ACCESS RULES — a test button shows only when ALL three conditions are true:
+      1. Module phase matches test type:
+         pre-test  → phase must be 'pre'  (before session starts)
+         mid-test  → phase must be 'live' (during session)
+         post-test → phase must be 'post' (after session ends)
+      2. Current time is within the test's own start_datetime → end_datetime window
+      3. Trainee has not exhausted max_attempts
+
+      If the trainee already has a result (att), always show the result regardless of window.
+      Lock reason is shown when phase is wrong OR time window is closed.
     #}
-    {% set test_accessible = false %}
-    {% set test_lock_reason = '' %}
+
+    {# Step 1: check module phase matches test type #}
+    {% set phase_ok = false %}
+    {% set phase_reason = '' %}
     {% if test.test_type == 'pre' %}
-      {% if phase in ['pre', 'upcoming'] %}{% set test_accessible = true %}
-      {% else %}{% set test_lock_reason = 'Pre-test closed after session starts' %}{% endif %}
+      {% if phase == 'pre' %}{% set phase_ok = true %}
+      {% elif phase == 'live' or phase == 'post' %}{% set phase_reason = 'Pre-test window closed — session has started' %}
+      {% else %}{% set phase_reason = 'Module not yet scheduled' %}{% endif %}
     {% elif test.test_type == 'post' %}
-      {% if phase == 'post' %}{% set test_accessible = true %}
-      {% else %}{% set test_lock_reason = 'Available after session ends' %}{% endif %}
+      {% if phase == 'post' %}{% set phase_ok = true %}
+      {% elif phase == 'live' %}{% set phase_reason = 'Post-test available after session ends' %}
+      {% else %}{% set phase_reason = 'Post-test available after session ends' %}{% endif %}
     {% elif test.test_type == 'mid' %}
-      {% if phase == 'live' %}{% set test_accessible = true %}
-      {% else %}{% set test_lock_reason = 'Available during live session only' %}{% endif %}
+      {% if phase == 'live' %}{% set phase_ok = true %}
+      {% elif phase == 'pre' %}{% set phase_reason = 'Mid-test available during live session only' %}
+      {% else %}{% set phase_reason = 'Mid-test window closed — session has ended' %}{% endif %}
+    {% else %}
+      {% set phase_ok = true %}
     {% endif %}
-    <div class="card card-p anim-r mb-4" style="animation-delay:{{ loop.index0 * 60 }}ms">
+
+    {# Step 2: check test's own datetime window #}
+    {% set time_ok = true %}
+    {% set time_reason = '' %}
+    {% if test.start_datetime and now_iso < test.start_datetime %}
+      {% set time_ok = false %}
+      {% set time_reason = 'Opens ' + test.start_datetime[:16].replace('T',' ') %}
+    {% elif test.end_datetime and now_iso > test.end_datetime %}
+      {% set time_ok = false %}
+      {% set time_reason = 'Closed at ' + test.end_datetime[:16].replace('T',' ') %}
+    {% endif %}
+
+    {# Final: accessible only if phase ok AND time window ok #}
+    {% set test_accessible = phase_ok and time_ok %}
+    {% set lock_reason = time_reason if time_reason else phase_reason %}
+
+    <div class="card card-p anim-r mb-3" style="animation-delay:{{ loop.index0 * 60 }}ms">
       <div style="margin-bottom:10px">
-        <span class="badge {% if test.test_type=='pre' %}b-sky{% elif test.test_type=='post' %}b-violet{% else %}b-amber{% endif %}" style="margin-bottom:8px">{{ test.test_type }}-test</span>
+        <span class="badge {% if test.test_type=='pre' %}b-sky{% elif test.test_type=='post' %}b-violet{% else %}b-amber{% endif %}" style="margin-bottom:8px;font-size:10px">{{ test.test_type }}-test</span>
         <div style="font-weight:600;font-size:14px">{{ test.title }}</div>
       </div>
       <div style="font-size:12px;color:var(--t2);display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
-        <div class="flex justify-b"><span>⏱ Duration</span><span style="font-weight:600;color:var(--t1)">{{ test.duration_minutes }}min</span></div>
-        <div class="flex justify-b"><span>🎯 Pass at</span><span style="font-weight:600;color:var(--t1)">{{ test.passing_marks }}%</span></div>
-        {% if test.start_datetime %}<div class="flex justify-b"><span>📅 Opens</span><span style="font-weight:600;color:var(--t1)">{{ test.start_datetime[:16].replace('T',' ') }}</span></div>{% endif %}
-        {% if test.end_datetime %}<div class="flex justify-b"><span>🔚 Closes</span><span style="font-weight:600;color:var(--t1)">{{ test.end_datetime[:16].replace('T',' ') }}</span></div>{% endif %}
+        <div class="flex justify-b"><span>Duration</span><span style="font-weight:600;color:var(--t1)">{{ test.duration_minutes }}min</span></div>
+        <div class="flex justify-b"><span>Pass at</span><span style="font-weight:600;color:var(--t1)">{{ test.passing_marks }}%</span></div>
+        {% if test.start_datetime %}
+        <div class="flex justify-b">
+          <span>Opens</span>
+          <span style="font-weight:600;color:{% if now_iso >= test.start_datetime %}var(--green){% else %}var(--t1){% endif %}">
+            {{ test.start_datetime[:16].replace('T',' ') }}
+          </span>
+        </div>
+        {% endif %}
+        {% if test.end_datetime %}
+        <div class="flex justify-b">
+          <span>Closes</span>
+          <span style="font-weight:600;color:{% if now_iso > test.end_datetime %}var(--red){% else %}var(--t1){% endif %}">
+            {{ test.end_datetime[:16].replace('T',' ') }}
+          </span>
+        </div>
+        {% endif %}
       </div>
+
       {% if att %}
-      <div style="background:{% if att.passed %}var(--green-bg){% else %}var(--red-bg){% endif %};border-radius:var(--r2);padding:14px;text-align:center;border:1px solid {% if att.passed %}rgba(16,185,129,.2){% else %}rgba(239,68,68,.2){% endif %}">
-        <div style="font-family:'DM Serif Display',serif;font-size:28px;color:{% if att.passed %}var(--green){% else %}var(--red){% endif %}">{{ att.percentage|int }}%</div>
-        <div class="t-xs t-muted">{{ att.score }}/{{ att.total_marks }}</div>
-        <span class="badge {% if att.passed %}b-green{% else %}b-red{% endif %}" style="margin-top:6px">{{ '✅ PASSED' if att.passed else '❌ FAILED' }}</span>
-      </div>
+        {# Always show result if attempted, regardless of current lock state #}
+        <div style="background:{% if att.passed %}var(--green-bg){% else %}var(--red-bg){% endif %};border-radius:var(--r2);padding:14px;text-align:center;border:1px solid {% if att.passed %}rgba(16,185,129,.2){% else %}rgba(239,68,68,.2){% endif %}">
+          <div style="font-family:'DM Serif Display',serif;font-size:28px;color:{% if att.passed %}var(--green){% else %}var(--red){% endif %}">{{ att.percentage|int }}%</div>
+          <div class="t-xs t-muted">{{ att.score }}/{{ att.total_marks }}</div>
+          <span class="badge {% if att.passed %}b-green{% else %}b-red{% endif %}" style="margin-top:6px">{{ 'PASSED' if att.passed else 'FAILED' }}</span>
+        </div>
       {% elif test_accessible %}
-      <a href="{{ url_for('take_test', test_id=test.id) }}" class="btn btn-primary w-full" style="justify-content:center">✏️ Take Test</a>
+        <a href="{{ url_for('take_test', test_id=test.id) }}" class="btn btn-primary w-full" style="justify-content:center">Take Test</a>
       {% else %}
-      <div style="background:var(--card2);border-radius:var(--r2);padding:12px;text-align:center;border:1px solid var(--border)">
-        <div style="font-size:20px;margin-bottom:4px">🔒</div>
-        <div class="t-xs t-muted">{{ test_lock_reason }}</div>
-      </div>
+        <div style="background:var(--card2);border-radius:var(--r2);padding:12px 14px;border:1px solid var(--border)">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:4px">Locked</div>
+          <div style="font-size:12px;color:var(--t2)">{{ lock_reason }}</div>
+        </div>
       {% endif %}
     </div>
     {% endfor %}
     {% if not tests %}
-    <div class="card card-p" style="text-align:center;padding:32px"><div style="font-size:28px;margin-bottom:8px">📝</div><div class="t-sm t-muted">No tests assigned yet</div></div>
+    <div class="card card-p" style="text-align:center;padding:32px">
+      <div class="t-sm t-muted">No tests assigned yet</div>
+    </div>
     {% endif %}
   </div>
 </div>
