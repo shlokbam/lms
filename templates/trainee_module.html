@@ -17,17 +17,32 @@
       </div>
       <h2 style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:5px">{{ module.title }}</h2>
       <p class="t-secondary" style="font-size:14px;max-width:600px">{{ module.description or '' }}</p>
+      {% if module.start_datetime %}
+      <div style="font-size:12px;color:var(--t2);margin-top:8px;display:flex;gap:16px;flex-wrap:wrap">
+        <span>🟢 <strong>START:</strong> {{ module.start_datetime[:16].replace('T',' ') }}</span>
+        <span>🔴 <strong>END:</strong>&nbsp;&nbsp; {{ module.end_datetime[:16].replace('T',' ') if module.end_datetime else '—' }}</span>
+      </div>
+      {% endif %}
     </div>
     <!-- Overall progress -->
-    <div style="min-width:200px">
-      <div class="flex justify-b t-xs t-muted fw-700 mb-2"><span>OVERALL PROGRESS</span><span style="color:var(--t1)">{{ done_mats }}/{{ total_mats }}</span></div>
+    <div style="min-width:200px" id="progress-widget">
+      <div class="flex justify-b t-xs t-muted fw-700 mb-2"><span>OVERALL PROGRESS</span><span style="color:var(--t1)" id="prog-label">{{ done_mats }}/{{ total_mats }}</span></div>
       <div class="prog-track" style="height:10px">
-        <div class="prog-bar" style="width:{{ overall_pct }}%"></div>
+        <div class="prog-bar" id="prog-bar" style="width:{{ overall_pct }}%"></div>
       </div>
-      <div class="t-xs t-muted" style="margin-top:5px;text-align:right">{{ overall_pct }}% complete</div>
+      <div class="t-xs t-muted" style="margin-top:5px;text-align:right" id="prog-pct">{{ overall_pct }}% complete</div>
     </div>
   </div>
 </div>
+
+{# ─── Access rules:
+   PRE phase  → only 'pre' materials are open
+   LIVE phase → 'pre' and 'live' materials are open
+   POST phase → ALL materials (pre, live, post) are open
+   No schedule → treat as 'pre' (locked)
+#}
+{% set phase_order = {'pre': 1, 'live': 2, 'post': 3} %}
+{% set cur_phase_num = phase_order.get(phase, 0) %}
 
 <div style="display:grid;grid-template-columns:1fr 280px;gap:22px;align-items:start">
   <!-- COURSE CONTENT -->
@@ -41,7 +56,6 @@
     <div class="chapter-list">
       {% for ch in chapters %}
       {% set ch_mats = mat_by_chapter.get(ch.id, []) %}
-      {% set done_count = ch_mats|selectattr('id')|list|length %}
       <div class="chapter-item anim-up" style="animation-delay:{{ loop.index0 * 50 }}ms" id="chi-{{ ch.id }}">
         <div class="ch-header" onclick="toggleCh('{{ ch.id }}')">
           <div class="ch-num">{{ loop.index }}</div>
@@ -52,15 +66,18 @@
         <div class="ch-body" id="chb-{{ ch.id }}">
           {% for mat in ch_mats %}
           {% set prog = progress_map.get(mat.id) %}
-          {% set accessible = (phase == 'live' or phase == 'post') or (phase == 'pre' and mat.release_phase == 'pre') %}
+          {# Determine if this material is accessible based on phase #}
+          {% set mat_phase_num = phase_order.get(mat.release_phase, 1) %}
+          {% set accessible = cur_phase_num >= mat_phase_num %}
           <div class="mat-row" id="matr-{{ mat.id }}">
             <div class="mat-ico" style="background:{% if mat.file_type=='video' %}var(--violet-bg){% elif mat.file_type=='pdf' %}var(--red-bg){% else %}var(--sky-bg){% endif %}">
               {% if mat.file_type=='video' %}🎬{% elif mat.file_type=='pdf' %}📄{% elif mat.file_type=='ppt' %}📊{% else %}📎{% endif %}
             </div>
             <div class="mat-info">
-              <div class="mat-title">{{ mat.title }}</div>
+              <div class="mat-title" style="{% if not accessible %}color:var(--t3){% endif %}">{{ mat.title }}</div>
               <div class="mat-sub">
                 {{ mat.file_type }}
+                · <span class="badge {% if mat.release_phase=='pre' %}b-sky{% elif mat.release_phase=='live' %}b-green{% else %}b-violet{% endif %}" style="font-size:9px">{{ mat.release_phase }}</span>
                 {% if mat.file_type == 'video' and prog %}
                 · <span style="color:var(--acc)">{{ prog.watch_percent }}% watched</span>
                 {% endif %}
@@ -73,11 +90,15 @@
                 {% else %}
                   <a href="{{ url_for('serve_file', filename=mat.watermarked_path or mat.file_path) }}" target="_blank" class="btn btn-primary btn-sm">⬇ Open</a>
                 {% endif %}
-                <button onclick="markDone({{ mat.id }}, {{ module.id }})" class="btn btn-ghost btn-xs" id="mkb-{{ mat.id }}" title="Mark as done">
+                <button onclick="markDone({{ mat.id }}, {{ module.id }}, {{ total_mats }})" class="btn btn-ghost btn-xs" id="mkb-{{ mat.id }}" title="Mark as done">
                   {% if prog and prog.completed %}✅{% else %}○{% endif %}
                 </button>
               {% else %}
-                <span class="badge b-neutral">🔒 Locked</span>
+                <span class="badge b-neutral" title="Available during {{ mat.release_phase }} phase">🔒
+                  {% if mat.release_phase == 'live' %}Opens when session starts
+                  {% elif mat.release_phase == 'post' %}Opens after session ends
+                  {% else %}Locked{% endif %}
+                </span>
               {% endif %}
             </div>
           </div>
@@ -98,6 +119,24 @@
     <div class="sh mb-4 anim-r d1"><div class="sh-title">📝 Tests</div></div>
     {% for test in tests %}
     {% set att = attempts_map.get(test.id) %}
+    {# Test window access logic:
+       pre-test  → available ONLY before module starts (phase == 'pre' or 'upcoming')
+       post-test → available ONLY after module ends (phase == 'post')
+       mid-test  → available ONLY during live session (phase == 'live')
+       Also check the test's own start/end datetime window
+    #}
+    {% set test_accessible = false %}
+    {% set test_lock_reason = '' %}
+    {% if test.test_type == 'pre' %}
+      {% if phase in ['pre', 'upcoming'] %}{% set test_accessible = true %}
+      {% else %}{% set test_lock_reason = 'Pre-test closed after session starts' %}{% endif %}
+    {% elif test.test_type == 'post' %}
+      {% if phase == 'post' %}{% set test_accessible = true %}
+      {% else %}{% set test_lock_reason = 'Available after session ends' %}{% endif %}
+    {% elif test.test_type == 'mid' %}
+      {% if phase == 'live' %}{% set test_accessible = true %}
+      {% else %}{% set test_lock_reason = 'Available during live session only' %}{% endif %}
+    {% endif %}
     <div class="card card-p anim-r mb-4" style="animation-delay:{{ loop.index0 * 60 }}ms">
       <div style="margin-bottom:10px">
         <span class="badge {% if test.test_type=='pre' %}b-sky{% elif test.test_type=='post' %}b-violet{% else %}b-amber{% endif %}" style="margin-bottom:8px">{{ test.test_type }}-test</span>
@@ -106,6 +145,8 @@
       <div style="font-size:12px;color:var(--t2);display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
         <div class="flex justify-b"><span>⏱ Duration</span><span style="font-weight:600;color:var(--t1)">{{ test.duration_minutes }}min</span></div>
         <div class="flex justify-b"><span>🎯 Pass at</span><span style="font-weight:600;color:var(--t1)">{{ test.passing_marks }}%</span></div>
+        {% if test.start_datetime %}<div class="flex justify-b"><span>📅 Opens</span><span style="font-weight:600;color:var(--t1)">{{ test.start_datetime[:16].replace('T',' ') }}</span></div>{% endif %}
+        {% if test.end_datetime %}<div class="flex justify-b"><span>🔚 Closes</span><span style="font-weight:600;color:var(--t1)">{{ test.end_datetime[:16].replace('T',' ') }}</span></div>{% endif %}
       </div>
       {% if att %}
       <div style="background:{% if att.passed %}var(--green-bg){% else %}var(--red-bg){% endif %};border-radius:var(--r2);padding:14px;text-align:center;border:1px solid {% if att.passed %}rgba(16,185,129,.2){% else %}rgba(239,68,68,.2){% endif %}">
@@ -113,8 +154,13 @@
         <div class="t-xs t-muted">{{ att.score }}/{{ att.total_marks }}</div>
         <span class="badge {% if att.passed %}b-green{% else %}b-red{% endif %}" style="margin-top:6px">{{ '✅ PASSED' if att.passed else '❌ FAILED' }}</span>
       </div>
-      {% else %}
+      {% elif test_accessible %}
       <a href="{{ url_for('take_test', test_id=test.id) }}" class="btn btn-primary w-full" style="justify-content:center">✏️ Take Test</a>
+      {% else %}
+      <div style="background:var(--card2);border-radius:var(--r2);padding:12px;text-align:center;border:1px solid var(--border)">
+        <div style="font-size:20px;margin-bottom:4px">🔒</div>
+        <div class="t-xs t-muted">{{ test_lock_reason }}</div>
+      </div>
       {% endif %}
     </div>
     {% endfor %}
@@ -134,7 +180,6 @@
     <video id="vid-player" controls style="width:100%;display:block;margin-top:44px;max-height:500px" controlsList="nodownload" oncontextmenu="return false">
       <source id="vid-src" src="" type="video/mp4">
     </video>
-    <!-- Watermark overlay -->
     <div style="position:absolute;inset:44px 0 0 0;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden">
       <div style="color:rgba(255,255,255,0.08);font-size:clamp(12px,2.5vw,20px);font-weight:700;transform:rotate(-30deg);text-align:center;white-space:nowrap;letter-spacing:1px">
         Eagle Industrial Services Pvt. Ltd.<br>CONFIDENTIAL · DO NOT DISTRIBUTE
@@ -147,6 +192,8 @@
 {% block scripts %}
 <script>
 let curVidMat = null, curVidMod = null;
+let doneMats = {{ done_mats }};
+let totalMats = {{ total_mats }};
 
 function toggleCh(id){
   const b=document.getElementById('chb-'+id);
@@ -177,17 +224,42 @@ function trackProgress(){
   const vid=document.getElementById('vid-player');
   if(!vid.duration || !curVidMat) return;
   const pct=Math.round(vid.currentTime/vid.duration*100);
+  const completed=pct>=90?1:0;
   fetch('/api/progress/update',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({material_id:curVidMat,module_id:curVidMod,completed:pct>=90?1:0,watch_percent:pct})});
+    body:JSON.stringify({material_id:curVidMat,module_id:curVidMod,completed:completed,watch_percent:pct})});
+  if(completed) updateProgressWidget(curVidMat);
 }
 
-function markDone(matId, modId){
+function markDone(matId, modId, total){
+  const btn=document.getElementById('mkb-'+matId);
+  const alreadyDone = btn && btn.textContent.trim()==='✅';
+  if(alreadyDone) return; // already marked
   fetch('/api/progress/update',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({material_id:matId,module_id:modId,completed:1,watch_percent:100})
-  }).then(()=>{
-    const btn=document.getElementById('mkb-'+matId);
-    if(btn){btn.textContent='✅';btn.style.color='var(--green)';}
+  }).then(r=>{
+    if(r.ok){
+      if(btn){btn.textContent='✅';btn.style.color='var(--green)';}
+      updateProgressWidget(matId);
+    }
   });
+}
+
+function updateProgressWidget(matId){
+  // Increment counter if not already counted
+  const btn=document.getElementById('mkb-'+matId);
+  // We track via a Set to avoid double-counting
+  if(!window._doneMats) window._doneMats=new Set();
+  if(!window._doneMats.has(matId)){
+    window._doneMats.add(matId);
+    doneMats = Math.min(doneMats+1, totalMats);
+    const pct = totalMats>0 ? Math.round(doneMats/totalMats*100) : 0;
+    const bar=document.getElementById('prog-bar');
+    const lbl=document.getElementById('prog-label');
+    const pctEl=document.getElementById('prog-pct');
+    if(bar) bar.style.width=pct+'%';
+    if(lbl) lbl.textContent=doneMats+'/'+totalMats;
+    if(pctEl) pctEl.textContent=pct+'% complete';
+  }
 }
 
 function throttle(fn, wait){

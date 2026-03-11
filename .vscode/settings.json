@@ -1,3 +1,8 @@
 {
-    "python-envs.defaultEnvManager": "ms-python.python:system"
+  "html.validate.scripts": false,
+  "html.validate.styles": false,
+  "emmet.includeLanguages": { "jinja-html": "html" },
+  "files.associations": {
+    "*.html": "jinja-html"
+  }
 }

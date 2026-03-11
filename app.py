@@ -133,7 +133,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL, email TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'trainee',
-            phone TEXT, department TEXT,
+            phone TEXT, department TEXT, profile_pic TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
         CREATE TABLE IF NOT EXISTS modules(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -242,6 +242,13 @@ def init_db():
             db.commit()
 
 init_db()
+
+# Migrations – add columns if they don't exist yet
+def run_migrations():
+    with get_db() as db:
+        try: db.execute('ALTER TABLE users ADD COLUMN profile_pic TEXT')
+        except: pass
+run_migrations()
 
 @app.context_processor
 def inject_globals():
@@ -647,6 +654,99 @@ def trainee_calendar():
         if t['start_datetime']:
             events.append({'title':f"{t['test_type'].title()} Test: {t['module_title']}","start":t['start_datetime'],'end':t['end_datetime'],'type':'test','color':'#F79009'})
     return render_template('trainee_calendar.html',events=json.dumps(events))
+
+@app.route('/trainee/profile/update', methods=['POST'])
+@login_required
+def update_profile():
+    db=get_db(); uid=session['user_id']
+    name=request.form['name'].strip()
+    email=request.form['email'].strip()
+    phone=request.form.get('phone','').strip()
+    department=request.form.get('department','').strip()
+    try:
+        db.execute('UPDATE users SET name=?,email=?,phone=?,department=? WHERE id=?',(name,email,phone,department,uid))
+        db.commit()
+        session['name']=name
+        flash('Profile updated successfully!','success')
+    except:
+        flash('Email already in use by another account.','error')
+    return redirect(url_for('trainee_profile'))
+
+@app.route('/trainee/profile/change-password', methods=['POST'])
+@login_required
+def change_password():
+    db=get_db(); uid=session['user_id']
+    current=request.form['current_password']
+    new_pw=request.form['new_password']
+    confirm=request.form['confirm_password']
+    user=db.execute('SELECT * FROM users WHERE id=?',(uid,)).fetchone()
+    if user['password']!=hash_pw(current):
+        flash('Current password is incorrect.','error')
+    elif new_pw!=confirm:
+        flash('New passwords do not match.','error')
+    elif len(new_pw)<6:
+        flash('New password must be at least 6 characters.','error')
+    else:
+        db.execute('UPDATE users SET password=? WHERE id=?',(hash_pw(new_pw),uid))
+        db.commit()
+        flash('Password updated successfully!','success')
+    return redirect(url_for('trainee_profile'))
+
+@app.route('/trainee/profile/upload-pic', methods=['POST'])
+@login_required
+def upload_profile_pic():
+    db=get_db(); uid=session['user_id']
+    if 'profile_pic' not in request.files:
+        flash('No file selected.','error'); return redirect(url_for('trainee_profile'))
+    file=request.files['profile_pic']
+    if not file or not allowed_file(file.filename):
+        flash('Only image files allowed (jpg, png, webp).','error'); return redirect(url_for('trainee_profile'))
+    ext=file.filename.rsplit('.',1)[1].lower()
+    if ext not in ['jpg','jpeg','png','webp']:
+        flash('Only jpg, png, webp allowed for profile picture.','error'); return redirect(url_for('trainee_profile'))
+    fname=f"avatar_{uid}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.{ext}"
+    path=os.path.join(UPLOAD_DIR,fname)
+    file.save(path)
+    db.execute('UPDATE users SET profile_pic=? WHERE id=?',(fname,uid))
+    db.commit()
+    flash('Profile picture updated!','success')
+    return redirect(url_for('trainee_profile'))
+
+# TRAINER: Delete test
+@app.route('/trainer/module/<int:module_id>/test/<int:test_id>/delete', methods=['POST'])
+@trainer_required
+def delete_test(module_id, test_id):
+    db=get_db()
+    db.execute('DELETE FROM questions WHERE test_id=?',(test_id,))
+    db.execute('DELETE FROM test_attempts WHERE test_id=?',(test_id,))
+    db.execute('DELETE FROM tests WHERE id=?',(test_id,))
+    db.commit()
+    flash('Test deleted.','success')
+    return redirect(url_for('trainer_module_detail', module_id=module_id))
+
+# TRAINER: Edit test (GET shows form, POST saves)
+@app.route('/trainer/module/<int:module_id>/test/<int:test_id>/edit', methods=['GET','POST'])
+@trainer_required
+def edit_test(module_id, test_id):
+    db=get_db()
+    module=db.execute('SELECT * FROM modules WHERE id=?',(module_id,)).fetchone()
+    test=db.execute('SELECT * FROM tests WHERE id=? AND module_id=?',(test_id,module_id)).fetchone()
+    if not test: abort(404)
+    if request.method=='POST':
+        db.execute('UPDATE tests SET title=?,test_type=?,duration_minutes=?,start_datetime=?,end_datetime=?,passing_marks=?,max_attempts=? WHERE id=?',
+            (request.form['title'],request.form['test_type'],request.form['duration'],
+             request.form['start_datetime'],request.form['end_datetime'],
+             request.form['passing_marks'],request.form.get('max_attempts',1),test_id))
+        # Replace questions
+        db.execute('DELETE FROM questions WHERE test_id=?',(test_id,))
+        for q in json.loads(request.form.get('questions','[]')):
+            db.execute('INSERT INTO questions(test_id,question_text,option_a,option_b,option_c,option_d,correct_option,marks) VALUES(?,?,?,?,?,?,?,?)',
+                (test_id,q['text'],q['a'],q['b'],q['c'],q['d'],q['correct'],q.get('marks',1)))
+        db.commit()
+        flash('Test updated!','success')
+        return redirect(url_for('trainer_module_detail', module_id=module_id))
+    questions=db.execute('SELECT * FROM questions WHERE test_id=? ORDER BY id',(test_id,)).fetchall()
+    return render_template('edit_test.html', module=module, test=test, questions=questions)
 
 if __name__=='__main__':
     app.run(debug=True,port=5000)

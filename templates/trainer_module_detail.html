@@ -135,11 +135,18 @@
             <div style="font-weight:600;font-size:14px">{{ test.title }}</div>
             <span class="badge {% if test.test_type=='pre' %}b-sky{% elif test.test_type=='post' %}b-violet{% else %}b-amber{% endif %}">{{ test.test_type }}-test</span>
           </div>
-          <div class="flex gap-3 t-xs t-muted">
+          <div class="flex gap-3 t-xs t-muted mb-3">
             <span>⏱ {{ test.duration_minutes }}min</span>
             <span>🎯 {{ test.passing_marks }}% pass</span>
             <span>🔄 {{ test.max_attempts }}x</span>
-            {% if test.start_datetime %}<span>📅 {{ test.start_datetime[:10] }}</span>{% endif %}
+            {% if test.start_datetime %}<span>📅 {{ test.start_datetime[:16].replace('T',' ') }}</span>{% endif %}
+            {% if test.end_datetime %}<span>🔚 {{ test.end_datetime[:16].replace('T',' ') }}</span>{% endif %}
+          </div>
+          <div class="flex gap-2">
+            <a href="{{ url_for('edit_test', module_id=module.id, test_id=test.id) }}" class="btn btn-ghost btn-xs">✏️ Edit</a>
+            <form method="POST" action="{{ url_for('delete_test', module_id=module.id, test_id=test.id) }}" onsubmit="return confirm('Delete this test and all its attempts?')">
+              <button type="submit" class="btn btn-danger btn-xs">🗑 Delete</button>
+            </form>
           </div>
         </div>
         {% endfor %}
