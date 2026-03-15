@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import client from '../../api/client'
 import { useAuth } from '../../context/AuthContext'
+import { fileUrl } from '../../api/fileUrl'
 
 export default function Profile() {
   const { user, updateName } = useAuth()
@@ -63,7 +64,7 @@ export default function Profile() {
         <div className="card card-p anim-up center mb-4" style={{ padding:'28px 20px' }}>
           <div style={{ position:'relative', display:'inline-block', margin:'0 auto 16px', cursor:'pointer' }} onClick={()=>document.getElementById('pic-input').click()}>
             {u.profile_pic
-              ? <img src={`/uploads/${u.profile_pic}`} alt="Profile" style={{ width:80, height:80, borderRadius:'50%', objectFit:'cover', border:'2px solid var(--border)' }} />
+              ? <img src={fileUrl(u.profile_pic)} alt="Profile" style={{ width:80, height:80, borderRadius:'50%', objectFit:'cover', border:'2px solid var(--border)' }} />
               : <div className="ava ava-lg" style={{ margin:'0 auto' }}>{u.name?.[0]?.toUpperCase()}</div>
             }
             <div style={{ position:'absolute', bottom:0, right:0, background:'var(--acc)', borderRadius:'50%', width:24, height:24, display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, color:'#fff', border:'2px solid var(--card)', fontWeight:700 }}>+</div>

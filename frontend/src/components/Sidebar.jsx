@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { fileUrl } from '../api/fileUrl'
 
 export default function Sidebar() {
   const { user, logout } = useAuth()
@@ -30,7 +31,11 @@ export default function Sidebar() {
       </div>
 
       <div className="sb-user" style={{ position: 'relative' }}>
-        <div className="ava ava-sm ava-gold">{user?.name?.[0]?.toUpperCase()}</div>
+        {user?.profile_pic ? (
+          <img src={fileUrl(user.profile_pic)} alt="User" className="ava ava-sm" style={{ objectFit: 'cover' }} />
+        ) : (
+          <div className="ava ava-sm ava-gold">{user?.name?.[0]?.toUpperCase()}</div>
+        )}
         <div style={{ overflow: 'hidden', flex: 1 }}>
           <div className="sb-uname">{user?.name}</div>
           <div className="sb-urole">{user?.role}</div>

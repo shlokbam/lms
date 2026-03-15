@@ -1,12 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import client from '../../api/client'
+import { fileUrl } from '../../api/fileUrl'
 
 const TYPE_ICO = { video:'🎬', pdf:'📄', ppt:'📊', image:'🖼️' }
 const PHASE_ORDER = { pre:1, live:2, post:3, upcoming:0 }
 
 function canAccess(matPhase, modulePhase) {
   return PHASE_ORDER[matPhase] <= PHASE_ORDER[modulePhase]
+}
+
+function fmtDate(s) {
+  if (!s) return '—'
+  return new Date(s).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) + ' ' +
+    new Date(s).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true })
 }
 
 export default function TraineeModule() {
@@ -56,7 +63,10 @@ export default function TraineeModule() {
           <div>
             <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', color:module.color||'var(--acc)', marginBottom:6 }}>{module.category}</div>
             <h2 style={{ fontFamily:"'DM Serif Display',serif", fontSize:22, marginBottom:6 }}>{module.title}</h2>
-            <p className="t-sm t-secondary">{module.description}</p>
+            <p className="t-sm t-secondary" style={{ marginBottom:10 }}>{module.description}</p>
+            <div className="t-xs t-muted">
+              {fmtDate(module.start_datetime)} — {fmtDate(module.end_datetime)}
+            </div>
           </div>
           <div style={{ textAlign:'right', flexShrink:0 }}>
             {phaseBadge()}
@@ -112,7 +122,7 @@ export default function TraineeModule() {
                                 <div className="mat-actions">
                                   {mat.file_type === 'video'
                                     ? <button className="btn btn-xs btn-primary" onClick={()=>setVideoModal(mat)}>▶ Play</button>
-                                    : <a href={`/uploads/${mat.file_path}`} target="_blank" rel="noopener" className="btn btn-xs btn-primary">↗ Open</a>
+                                    : <a href={fileUrl(mat.file_path)} target="_blank" rel="noopener" className="btn btn-xs btn-primary">↗ Open</a>
                                   }
                                   <button className={`btn btn-xs ${done?'btn-secondary':'btn-ghost'}`} onClick={()=>markDone(mat.id, !done)}>
                                     {done?'✓ Done':'Mark Done'}
@@ -159,6 +169,11 @@ export default function TraineeModule() {
                   ) : (
                     <div className="t-xs t-muted" style={{ marginTop:6 }}>
                       {!matchPhase ? `Available during ${testPhaseMap[t.test_type]} phase` : 'Test window closed'}
+                      {(t.start_datetime || t.end_datetime) && (
+                        <div style={{ marginTop:4, opacity:0.8 }}>
+                          {fmtDate(t.start_datetime)} → {fmtDate(t.end_datetime)}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -173,7 +188,7 @@ export default function TraineeModule() {
         <div className="modal-bg open" onClick={()=>setVideoModal(null)}>
           <div className="modal" style={{ maxWidth:720, padding:0, overflow:'hidden' }} onClick={e=>e.stopPropagation()}>
             <div className="video-wrap">
-              <video controls autoPlay src={`/uploads/${videoModal.file_path}`}
+              <video controls autoPlay src={fileUrl(videoModal.file_path)}
                 style={{ width:'100%', maxHeight:480 }}
                 onTimeUpdate={e => {
                   const pct = Math.round((e.target.currentTime / e.target.duration) * 100)

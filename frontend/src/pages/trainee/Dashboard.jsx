@@ -15,6 +15,7 @@ function phaseBadge(phase) {
 
 export default function TraineeDashboard() {
   const [data, setData] = useState(null)
+  const [filter, setFilter] = useState('all')
 
   useEffect(() => {
     client.get('/api/trainee/dashboard').then(r => setData(r.data)).catch(() => {})
@@ -24,16 +25,20 @@ export default function TraineeDashboard() {
   if (!data) return <div style={{ padding:40, textAlign:'center', color:'var(--t3)' }}>Loading…</div>
   const { upcoming, ongoing, completed, total_tests, passed_tests, notifications } = data
 
+  const showLive = filter === 'all' || filter === 'live'
+  const showUpcoming = filter === 'all' || filter === 'upcoming'
+  const showEnded = filter === 'all' || filter === 'ended'
+
   return (
     <>
       <div className="stat-row anim-up">
         {[
-          { lbl:'Live Sessions', val:ongoing.length, cls:'st-green', ico:'🟢', icls:'st-i-green' },
-          { lbl:'Upcoming', val:upcoming.length, cls:'st-blue', ico:'📅', icls:'st-i-blue' },
-          { lbl:'Completed', val:completed.length, cls:'st-gold', ico:'✅', icls:'st-i-gold' },
+          { lbl:'Live Sessions', val:ongoing.length, cls:'st-green', ico:'🟢', icls:'st-i-green', f:'live' },
+          { lbl:'Upcoming', val:upcoming.length, cls:'st-blue', ico:'📅', icls:'st-i-blue', f:'upcoming' },
+          { lbl:'Completed', val:completed.length, cls:'st-gold', ico:'✅', icls:'st-i-gold', f:'ended' },
           { lbl:'Tests Passed', val:`${passed_tests}/${total_tests}`, cls:'st-violet', ico:'📝', icls:'st-i-violet' },
-        ].map(({ lbl,val,cls,ico,icls }) => (
-          <div key={lbl} className={`stat-tile ${cls}`}>
+        ].map(({ lbl,val,cls,ico,icls,f }) => (
+          <div key={lbl} className={`stat-tile ${cls}`} onClick={() => f && setFilter(f)} style={{ cursor: f ? 'pointer' : 'default' }}>
             <div className={`st-icon ${icls}`}>{ico}</div>
             <div className="st-num">{val}</div>
             <div className="st-lbl">{lbl}</div>
@@ -43,7 +48,21 @@ export default function TraineeDashboard() {
 
       <div style={{ display:'grid', gridTemplateColumns:'1fr 300px', gap:22, alignItems:'start' }}>
         <div>
-          {ongoing.length > 0 && (
+          <div className="sh anim-up d1" style={{ marginBottom: 16 }}>
+            <div>
+              <div className="sh-title">Learning Journey</div>
+              <div className="sh-sub">All your enrolled modules</div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              {['all','live','upcoming','ended'].map(f => (
+                <button key={f} className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setFilter(f)}>
+                  {f.charAt(0).toUpperCase() + f.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {showLive && ongoing.length > 0 && (
             <>
               <div className="sh anim-up mb-3"><div className="sh-title">🟢 Live Now</div></div>
               <div className="mod-grid" style={{ marginBottom:20 }}>
@@ -54,6 +73,7 @@ export default function TraineeDashboard() {
                       <div className="mc-cat">{m.category}</div>
                       <div className="mc-title">{m.title}</div>
                       <div className="mc-desc">{m.description}</div>
+                      <div style={{ fontSize:12, color:'var(--t3)', marginTop:6 }}>🟢 Ends {fmtDate(m.end_datetime)}</div>
                     </div>
                     <div className="mc-foot">
                       {phaseBadge(m.phase)}
@@ -65,7 +85,7 @@ export default function TraineeDashboard() {
             </>
           )}
 
-          {upcoming.length > 0 && (
+          {showUpcoming && upcoming.length > 0 && (
             <>
               <div className="sh anim-up mb-3"><div className="sh-title">📅 Upcoming</div></div>
               <div className="mod-grid" style={{ marginBottom:20 }}>
@@ -87,7 +107,7 @@ export default function TraineeDashboard() {
             </>
           )}
 
-          {completed.length > 0 && (
+          {showEnded && completed.length > 0 && (
             <>
               <div className="sh anim-up mb-3"><div className="sh-title">Completed</div></div>
               <div className="mod-grid">
@@ -111,7 +131,15 @@ export default function TraineeDashboard() {
           {ongoing.length === 0 && upcoming.length === 0 && completed.length === 0 && (
             <div className="card card-p"><div className="empty"><div className="empty-ico">📚</div><div className="empty-title">No Modules Yet</div><div className="empty-sub">You'll see your enrolled modules here once your trainer publishes them.</div></div></div>
           )}
+          {filter !== 'all' && (
+            (filter === 'live' && ongoing.length === 0) ||
+            (filter === 'upcoming' && upcoming.length === 0) ||
+            (filter === 'ended' && completed.length === 0)
+          ) && (
+            <div className="card card-p"><div className="empty"><div className="empty-ico">📭</div><div className="empty-title">No {filter} modules</div><div className="empty-sub">You don't have any modules in this category.</div></div></div>
+          )}
         </div>
+
 
         {/* Notifications sidebar */}
         <div>

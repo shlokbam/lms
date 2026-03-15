@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import client from '../../api/client'
+import { fileUrl } from '../../api/fileUrl'
 
 const PHASE_LABELS = { pre: 'Pre-Session', live: 'Live', post: 'Post-Session', upcoming:'Draft' }
 const TYPE_ICO = { video:'🎬', pdf:'📄', ppt:'📊', image:'🖼️' }
@@ -89,7 +90,10 @@ export default function TrainerModuleDetail() {
           <div>
             <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'.8px', color:module.color||'var(--acc)', marginBottom:6 }}>{module.category}</div>
             <h2 style={{ fontFamily:"'DM Serif Display',serif", fontSize:24, marginBottom:6 }}>{module.title}</h2>
-            <p className="t-secondary t-sm">{module.description}</p>
+            <p className="t-secondary t-sm" style={{ marginBottom:10 }}>{module.description}</p>
+            <div className="t-xs t-muted">
+              {fmtDate(module.start_datetime)} — {fmtDate(module.end_datetime)}
+            </div>
           </div>
           <div style={{ display:'flex', gap:8, flexShrink:0, flexWrap:'wrap' }}>
             <Link to={`/trainer/module/${moduleId}/reports`} className="btn btn-secondary btn-sm">📊 Reports</Link>
@@ -136,7 +140,7 @@ export default function TrainerModuleDetail() {
                               <div className="mat-sub">{mat.file_type} · <span className="badge b-blue" style={{ fontSize:9 }}>{mat.release_phase}</span></div>
                             </div>
                             <div className="mat-actions">
-                              <a href={`/uploads/${mat.file_path}`} target="_blank" rel="noopener" className="btn btn-xs btn-secondary">↗</a>
+                              <a href={fileUrl(mat.file_path)} target="_blank" rel="noopener" className="btn btn-xs btn-secondary">↗</a>
                               <button className="btn btn-xs btn-danger" onClick={()=>deleteMaterial(mat.id)}>✕</button>
                             </div>
                           </div>
@@ -158,7 +162,7 @@ export default function TrainerModuleDetail() {
                   <div className="mat-ico" style={{ background:'var(--acc-bg)' }}>{TYPE_ICO[mat.file_type]||'📁'}</div>
                   <div className="mat-info"><div className="mat-title">{mat.title}</div></div>
                   <div className="mat-actions">
-                    <a href={`/uploads/${mat.file_path}`} target="_blank" rel="noopener" className="btn btn-xs btn-secondary">↗</a>
+                    <a href={fileUrl(mat.file_path)} target="_blank" rel="noopener" className="btn btn-xs btn-secondary">↗</a>
                     <button className="btn btn-xs btn-danger" onClick={()=>deleteMaterial(mat.id)}>✕</button>
                   </div>
                 </div>

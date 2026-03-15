@@ -84,6 +84,9 @@ export default function TrainerDashboard() {
                 <div className="mc-cat">{m.category}</div>
                 <div className="mc-title">{m.title}</div>
                 <div className="mc-desc">{m.description}</div>
+                <div style={{ fontSize:11, color:'var(--t3)', marginTop:8 }}>
+                  📅 {fmtDate(m.start_datetime)} — {fmtDate(m.end_datetime)}
+                </div>
               </div>
               <div className="mc-foot">
                 <div className="mc-meta">

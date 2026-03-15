@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import func as sqlfunc
+from sqlalchemy import func as sqlfunc, text
 from typing import List, Optional
 from datetime import datetime
 import os, shutil
@@ -43,9 +43,9 @@ def trainer_dashboard(db: Session = Depends(get_db), trainer: models.User = Depe
     ongoing = [m for m in modules if m.start_datetime and m.end_datetime and m.start_datetime <= now <= m.end_datetime]
 
     recent = db.execute(
-        """SELECT u.name, m.title, e.enrolled_at FROM enrollments e
+        text("""SELECT u.name, m.title, e.enrolled_at FROM enrollments e
            JOIN users u ON e.trainee_id=u.id JOIN modules m ON e.module_id=m.id
-           WHERE m.trainer_id=:tid ORDER BY e.enrolled_at DESC LIMIT 6""",
+           WHERE m.trainer_id=:tid ORDER BY e.enrolled_at DESC LIMIT 6"""),
         {"tid": trainer.id}
     ).fetchall()
 
@@ -91,8 +91,8 @@ def module_detail(module_id: int, db: Session = Depends(get_db), trainer: models
     materials = db.query(models.Material).filter_by(module_id=module_id).order_by(models.Material.chapter_id, models.Material.order_num).all()
     tests = db.query(models.Test).filter_by(module_id=module_id).order_by(models.Test.created_at).all()
     enrollments = db.execute(
-        """SELECT u.name, u.email, u.department, e.enrolled_at, e.completed, e.trainee_id
-           FROM enrollments e JOIN users u ON e.trainee_id=u.id WHERE e.module_id=:mid""",
+        text("""SELECT u.name, u.email, u.department, e.enrolled_at, e.completed, e.trainee_id
+           FROM enrollments e JOIN users u ON e.trainee_id=u.id WHERE e.module_id=:mid"""),
         {"mid": module_id}
     ).fetchall()
 
@@ -300,8 +300,8 @@ def module_reports(module_id: int, db: Session = Depends(get_db), trainer: model
         raise HTTPException(404)
     tests = db.query(models.Test).filter_by(module_id=module_id).all()
     trainees = db.execute(
-        """SELECT u.id, u.name, u.email, u.department, e.completed
-           FROM enrollments e JOIN users u ON e.trainee_id=u.id WHERE e.module_id=:mid""",
+        text("""SELECT u.id, u.name, u.email, u.department, e.completed
+           FROM enrollments e JOIN users u ON e.trainee_id=u.id WHERE e.module_id=:mid"""),
         {"mid": module_id}
     ).fetchall()
     report_data = []

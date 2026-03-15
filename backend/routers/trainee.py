@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from typing import List
 from datetime import datetime
 import json, os, shutil
@@ -31,14 +32,14 @@ def _get_phase(module) -> str:
 def trainee_dashboard(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     now = datetime.now()
     enrollments = db.execute(
-        """SELECT m.* FROM modules m JOIN enrollments e ON m.id=e.module_id
-           WHERE e.trainee_id=:uid AND m.status='published' ORDER BY m.start_datetime""",
+        text("""SELECT m.* FROM modules m JOIN enrollments e ON m.id=e.module_id
+           WHERE e.trainee_id=:uid AND m.status='published' ORDER BY m.start_datetime"""),
         {"uid": current_user.id}
-    ).fetchall()
+    ).mappings().all()
 
     upcoming, ongoing, completed_list = [], [], []
     for row in enrollments:
-        m = db.query(models.Module).filter_by(id=row[0]).first()
+        m = db.query(models.Module).filter_by(id=row.id).first()
         phase = _get_phase(m)
         data = schemas.ModuleOut.from_orm(m).dict()
         data["phase"] = phase
@@ -168,20 +169,20 @@ def submit_test(test_id: int, body: schemas.SubmitTestRequest,
 @router.get("/calendar")
 def trainee_calendar(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     modules = db.execute(
-        """SELECT m.* FROM modules m JOIN enrollments e ON m.id=e.module_id
-           WHERE e.trainee_id=:uid AND m.status='published'""",
+        text("""SELECT m.* FROM modules m JOIN enrollments e ON m.id=e.module_id
+           WHERE e.trainee_id=:uid AND m.status='published'"""),
         {"uid": current_user.id}
-    ).fetchall()
+    ).mappings().all()
     tests = db.execute(
-        """SELECT t.*, m.title as module_title FROM tests t
+        text("""SELECT t.*, m.title as module_title FROM tests t
            JOIN modules m ON t.module_id=m.id JOIN enrollments e ON m.id=e.module_id
-           WHERE e.trainee_id=:uid""",
+           WHERE e.trainee_id=:uid"""),
         {"uid": current_user.id}
-    ).fetchall()
+    ).mappings().all()
 
     events = []
     for row in modules:
-        m = db.query(models.Module).filter_by(id=row[0]).first()
+        m = db.query(models.Module).filter_by(id=row.id).first()
         if m and m.start_datetime:
             events.append({
                 "title": m.title, "start": m.start_datetime.isoformat(),
@@ -189,10 +190,10 @@ def trainee_calendar(db: Session = Depends(get_db), current_user: models.User = 
                 "type": "module", "id": m.id, "color": m.color or "#3B5BDB"
             })
     for row in tests:
-        t = db.query(models.Test).filter_by(id=row[0]).first()
+        t = db.query(models.Test).filter_by(id=row.id).first()
         if t and t.start_datetime:
             events.append({
-                "title": f"{t.test_type.title()} Test: {row[-1]}",
+                "title": f"{t.test_type.title()} Test: {row.module_title}",
                 "start": t.start_datetime.isoformat(),
                 "end": t.end_datetime.isoformat() if t.end_datetime else None,
                 "type": "test", "color": "#F79009"
@@ -204,20 +205,21 @@ def trainee_calendar(db: Session = Depends(get_db), current_user: models.User = 
 @router.get("/profile")
 def trainee_profile(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     attempts = db.execute(
-        """SELECT ta.*, t.title as test_title, t.test_type, m.title as module_title
+        text("""SELECT ta.*, t.title as test_title, t.test_type, m.title as module_title
            FROM test_attempts ta JOIN tests t ON ta.test_id=t.id JOIN modules m ON t.module_id=m.id
-           WHERE ta.trainee_id=:uid ORDER BY ta.started_at DESC""",
+           WHERE ta.trainee_id=:uid ORDER BY ta.started_at DESC"""),
         {"uid": current_user.id}
-    ).fetchall()
+    ).mappings().all()
     total_enrolled = db.query(models.Enrollment).filter_by(trainee_id=current_user.id).count()
     total_completed = db.query(models.Enrollment).filter_by(trainee_id=current_user.id, completed=True).count()
-    avg = db.execute("SELECT AVG(percentage) FROM test_attempts WHERE trainee_id=:uid", {"uid": current_user.id}).scalar()
+    avg = db.execute(text("SELECT AVG(percentage) FROM test_attempts WHERE trainee_id=:uid"), {"uid": current_user.id}).scalar()
+    
     return {
-        "user": schemas.UserOut.from_orm(current_user).dict(),
-        "attempts": [dict(zip(r.keys(), r)) for r in attempts],
+        "user": schemas.UserOut.model_validate(current_user).model_dump(),
+        "attempts": [dict(r) for r in attempts],
         "total_enrolled": total_enrolled,
         "total_completed": total_completed,
-        "avg_score": round(avg, 1) if avg else 0,
+        "avg_score": round(float(avg or 0), 1)
     }
 
 

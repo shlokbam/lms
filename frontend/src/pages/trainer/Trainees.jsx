@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import client from '../../api/client'
+import { fileUrl } from '../../api/fileUrl'
 
 export default function Trainees() {
   const [trainees, setTrainees] = useState([])
@@ -26,7 +27,16 @@ export default function Trainees() {
             <tbody>
               {trainees.map(t => (
                 <tr key={t.id}>
-                  <td><div className="flex items-c gap-2"><div className="ava ava-sm">{t.name?.[0]}</div><div style={{ fontWeight:600 }}>{t.name}</div></div></td>
+                  <td>
+                    <div className="flex items-c gap-2">
+                      {t.profile_pic ? (
+                        <img src={fileUrl(t.profile_pic)} alt="Ava" className="ava ava-sm" style={{ objectFit: 'cover' }} />
+                      ) : (
+                        <div className="ava ava-sm">{t.name?.[0]}</div>
+                      )}
+                      <div style={{ fontWeight:600 }}>{t.name}</div>
+                    </div>
+                  </td>
                   <td className="t-secondary t-sm">{t.email}</td>
                   <td><span className="badge b-blue">{t.department||'Unassigned'}</span></td>
                   <td className="t-sm t-secondary">{t.phone||'—'}</td>
