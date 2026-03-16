@@ -4,6 +4,6 @@
  */
 export function fileUrl(filename) {
   if (!filename) return '#'
-  const token = localStorage.getItem('token') || ''
+  const token = localStorage.getItem('eagle_token') || ''
   return `/uploads/${filename}${token ? `?token=${token}` : ''}`
 }

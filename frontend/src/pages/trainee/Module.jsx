@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import client from '../../api/client'
 import { fileUrl } from '../../api/fileUrl'
+import { useAuth } from '../../context/AuthContext'
 
 const TYPE_ICO = { video:'Vid', pdf:'PDF', ppt:'PPT', image:'Img' }
 const PHASE_ORDER = { pre:1, live:2, post:3, upcoming:0 }
@@ -22,6 +23,8 @@ export default function TraineeModule() {
   const [data, setData] = useState(null)
   const [openChapters, setOpenChapters] = useState({})
   const [videoModal, setVideoModal] = useState(null)
+  const [docModal, setDocModal] = useState(null)
+  const { user } = useAuth()
 
   useEffect(() => { load() }, [moduleId])
 
@@ -52,6 +55,20 @@ export default function TraineeModule() {
     if (phase === 'pre') return <span className="badge b-sky"> Upcoming</span>
     return <span className="badge b-neutral">Ended</span>
   }
+
+  const WatermarkOverlay = () => (
+    <div style={{
+      position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 50, overflow: 'hidden',
+      display: 'flex', flexWrap: 'wrap', gap: '40px', padding: '20px', alignItems: 'center', justifyContent: 'center',
+      opacity: 0.15, transform: 'rotate(-30deg) scale(1.5)', userSelect: 'none'
+    }}>
+      {Array.from({ length: 30 }).map((_, i) => (
+        <div key={i} style={{ fontSize: '18px', fontWeight: '800', color: '#000', whiteSpace: 'nowrap' }}>
+          Eagle Securities <br/><span style={{ fontSize: '14px', fontWeight: '600' }}>{user?.email}</span>
+        </div>
+      ))}
+    </div>
+  )
 
   return (
     <>
@@ -132,7 +149,7 @@ export default function TraineeModule() {
                                 <div className="mat-actions">
                                   {mat.file_type === 'video'
                                     ? <button className="btn btn-xs btn-primary" onClick={()=>setVideoModal(mat)}>Play Video</button>
-                                    : <a href={fileUrl(mat.file_path)} target="_blank" rel="noopener noreferrer" className="btn btn-xs btn-primary">Open File</a>
+                                    : <button className="btn btn-xs btn-primary" onClick={()=>setDocModal(mat)}>Open File</button>
                                   }
                                   <button className={`btn btn-xs ${done?'btn-secondary':'btn-ghost'}`} onClick={()=>markDone(mat.id, !done)}>
                                     {done?'✓ Done':'Mark Done'}
@@ -197,9 +214,10 @@ export default function TraineeModule() {
       {videoModal && (
         <div className="modal-bg open" onClick={()=>setVideoModal(null)}>
           <div className="modal" style={{ maxWidth:720, padding:0, overflow:'hidden' }} onClick={e=>e.stopPropagation()}>
-            <div className="video-wrap">
+            <div className="video-wrap" style={{ position: 'relative' }}>
+              <WatermarkOverlay />
               <video controls autoPlay src={fileUrl(videoModal.file_path)}
-                style={{ width:'100%', maxHeight:480 }}
+                style={{ width:'100%', maxHeight:480, display: 'block' }}
                 onTimeUpdate={e => {
                   const pct = Math.round((e.target.currentTime / e.target.duration) * 100)
                   if (pct > 90) markDone(videoModal.id, true)
@@ -207,6 +225,32 @@ export default function TraineeModule() {
               </video>
             </div>
             <div style={{ padding:'12px 16px', fontWeight:600, fontSize:14 }}>{videoModal.title}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Document Modal */}
+      {docModal && (
+        <div className="modal-bg open" onClick={()=>setDocModal(null)}>
+          <div className="modal" style={{ maxWidth: '96vw', height: '96vh', padding:0, overflow:'hidden', display: 'flex', flexDirection: 'column' }} onClick={e=>e.stopPropagation()}>
+            <div style={{ padding:'12px 16px', fontWeight:600, fontSize:14, borderBottom: '1px solid var(--border)', background: 'var(--card)' }}>
+              {docModal.title}
+              <button className="modal-close" onClick={()=>setDocModal(null)}>×</button>
+            </div>
+            <div style={{ flex: 1, position: 'relative', background: '#e2e8f0' }}>
+              <iframe 
+                src={fileUrl(docModal.file_path)} 
+                title={docModal.title}
+                style={{ width: '100%', height: '100%', border: 'none' }}
+              />
+            </div>
+            <div style={{ padding:'12px 16px', borderTop: '1px solid var(--border)', background: 'var(--card)' }}>
+              <button className="btn btn-primary btn-sm" onClick={() => {
+                markDone(docModal.id, true)
+                setDocModal(null)
+              }}>Finish Viewing</button>
+              <span className="t-xs t-muted" style={{ marginLeft: 12 }}>Click to mark this material as locally completed</span>
+            </div>
           </div>
         </div>
       )}

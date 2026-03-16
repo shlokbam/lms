@@ -190,18 +190,9 @@ async def upload_material(
              else "ppt" if ext in {"ppt", "pptx"}
              else "image")
 
-    wm_fname = f"wm_{fname}"
-    wm_path = os.path.join(UPLOAD_DIR, wm_fname)
-    if ftype == "pdf":
-        watermark_pdf(orig_path, wm_path)
-    elif ftype == "image":
-        watermark_image(orig_path, wm_path)
-    else:
-        shutil.copy(orig_path, wm_path)
-
     count = db.query(models.Material).filter_by(module_id=module_id, chapter_id=chapter_id).count()
     mat = models.Material(module_id=module_id, chapter_id=chapter_id, title=title,
-                          file_path=fname, watermarked_path=wm_fname,
+                          file_path=fname, watermarked_path=fname,
                           file_type=ftype, release_phase=phase, order_num=count)
     db.add(mat); db.commit(); db.refresh(mat)
     _notify_trainees(db, f"📎 New Material: {title}",
