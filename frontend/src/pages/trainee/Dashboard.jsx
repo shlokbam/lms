@@ -16,6 +16,7 @@ function phaseBadge(phase) {
 export default function TraineeDashboard() {
   const [data, setData] = useState(null)
   const [filter, setFilter] = useState('all')
+  const [typeFilter, setTypeFilter] = useState('all')
 
   useEffect(() => {
     client.get('/api/trainee/dashboard').then(r => setData(r.data)).catch(() => {})
@@ -23,7 +24,12 @@ export default function TraineeDashboard() {
   }, [])
 
   if (!data) return <div style={{ padding:40, textAlign:'center', color:'var(--t3)' }}>Loading…</div>
-  const { upcoming, ongoing, completed, total_tests, passed_tests, notifications } = data
+  const { upcoming: rawUp, ongoing: rawOn, completed: rawComp, total_tests, passed_tests, notifications } = data
+
+  const typeFilt = (m) => typeFilter === 'all' || m.training_type === typeFilter
+  const upcoming = rawUp.filter(typeFilt)
+  const ongoing = rawOn.filter(typeFilt)
+  const completed = rawComp.filter(typeFilt)
 
   const showLive = filter === 'all' || filter === 'live'
   const showUpcoming = filter === 'all' || filter === 'upcoming'
@@ -59,6 +65,12 @@ export default function TraineeDashboard() {
                   {f.charAt(0).toUpperCase() + f.slice(1)}
                 </button>
               ))}
+              <div style={{ width:1, height:24, background:'var(--border)', margin:'0 4px' }} />
+              {[{v:'all',l:'All Types'},{v:'self_paced',l:'Self-paced'},{v:'virtual',l:'Virtual'},{v:'classroom',l:'Classroom'}].map(f => (
+                <button key={f.v} className={`btn btn-sm ${typeFilter===f.v ? 'btn-primary':'btn-secondary'}`} onClick={()=>setTypeFilter(f.v)}>
+                  {f.l}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -73,6 +85,11 @@ export default function TraineeDashboard() {
                       <div className="mc-cat">{m.category}</div>
                       <div className="mc-title">{m.title}</div>
                       <div className="mc-desc">{m.description}</div>
+                      <div style={{ marginTop:6 }}>
+                        <span className={`badge ${m.training_type==='virtual'?'b-violet':m.training_type==='classroom'?'b-amber':'b-blue'}`}>
+                          {m.training_type === 'virtual' ? 'Virtual' : m.training_type === 'classroom' ? 'Classroom' : 'Self-paced'}
+                        </span>
+                      </div>
                       <div style={{ fontSize:12, color:'var(--t3)', marginTop:6 }}>🟢 Ends {fmtDate(m.end_datetime)}</div>
                     </div>
                     <div className="mc-foot">
@@ -95,6 +112,11 @@ export default function TraineeDashboard() {
                     <div className="mc-body">
                       <div className="mc-cat">{m.category}</div>
                       <div className="mc-title">{m.title}</div>
+                      <div style={{ marginTop:6 }}>
+                        <span className={`badge ${m.training_type==='virtual'?'b-violet':m.training_type==='classroom'?'b-amber':'b-blue'}`}>
+                          {m.training_type === 'virtual' ? 'Virtual' : m.training_type === 'classroom' ? 'Classroom' : 'Self-paced'}
+                        </span>
+                      </div>
                       <div style={{ fontSize:12, color:'var(--t3)', marginTop:6 }}>📅 Starts {fmtDate(m.start_datetime)}</div>
                     </div>
                     <div className="mc-foot">
@@ -117,6 +139,11 @@ export default function TraineeDashboard() {
                     <div className="mc-body">
                       <div className="mc-cat">{m.category}</div>
                       <div className="mc-title">{m.title}</div>
+                      <div style={{ marginTop:6 }}>
+                        <span className={`badge ${m.training_type==='virtual'?'b-violet':m.training_type==='classroom'?'b-amber':'b-blue'}`}>
+                          {m.training_type === 'virtual' ? 'Virtual' : m.training_type === 'classroom' ? 'Classroom' : 'Self-paced'}
+                        </span>
+                      </div>
                     </div>
                     <div className="mc-foot">
                       <span className="badge b-neutral">Ended</span>

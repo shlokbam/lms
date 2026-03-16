@@ -18,6 +18,7 @@ function phaseBadge(m, now) {
 export default function TrainerDashboard() {
   const [data, setData] = useState(null)
   const [filter, setFilter] = useState('all')
+  const [typeFilter, setTypeFilter] = useState('all')
   const [search, setSearch] = useState('')
   const now = new Date()
 
@@ -39,7 +40,7 @@ export default function TrainerDashboard() {
     if (filter === 'upcoming') return m.start_datetime && new Date(m.start_datetime) > now
     if (filter === 'ended') return m.end_datetime && new Date(m.end_datetime) < now
     return true
-  })
+  }).filter(m => typeFilter === 'all' || m.training_type === typeFilter)
 
   return (
     <>
@@ -71,6 +72,12 @@ export default function TrainerDashboard() {
               {f.charAt(0).toUpperCase() + f.slice(1)}
             </button>
           ))}
+          <div style={{ width:1, height:24, background:'var(--border)', margin:'0 4px' }} />
+          {[{v:'all',l:'All Types'},{v:'self_paced',l:'Self-paced'},{v:'virtual',l:'Virtual'},{v:'classroom',l:'Classroom'}].map(f => (
+            <button key={f.v} className={`btn btn-sm ${typeFilter===f.v ? 'btn-primary':'btn-secondary'}`} onClick={()=>setTypeFilter(f.v)}>
+              {f.l}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -84,6 +91,11 @@ export default function TrainerDashboard() {
                 <div className="mc-cat">{m.category}</div>
                 <div className="mc-title">{m.title}</div>
                 <div className="mc-desc">{m.description}</div>
+                <div style={{ marginTop:8 }}>
+                  <span className={`badge ${m.training_type==='virtual'?'b-violet':m.training_type==='classroom'?'b-amber':'b-blue'}`}>
+                    {m.training_type === 'virtual' ? 'Virtual' : m.training_type === 'classroom' ? 'Classroom' : 'Self-paced'}
+                  </span>
+                </div>
                 <div style={{ fontSize:11, color:'var(--t3)', marginTop:8 }}>
                   📅 {fmtDate(m.start_datetime)} — {fmtDate(m.end_datetime)}
                 </div>

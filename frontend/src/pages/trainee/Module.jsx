@@ -64,6 +64,16 @@ export default function TraineeModule() {
             <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', color:module.color||'var(--acc)', marginBottom:6 }}>{module.category}</div>
             <h2 style={{ fontFamily:"'DM Serif Display',serif", fontSize:22, marginBottom:6 }}>{module.title}</h2>
             <p className="t-sm t-secondary" style={{ marginBottom:10 }}>{module.description}</p>
+            <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:10 }}>
+              <span className={`badge ${module.training_type==='virtual'?'b-violet':module.training_type==='classroom'?'b-amber':'b-blue'}`}>
+                {module.training_type === 'virtual' ? 'Virtual' : module.training_type === 'classroom' ? 'Classroom' : 'Self-paced'}
+              </span>
+              {module.meet_link && canAccess('live', phase) && (
+                <a href={module.meet_link.startsWith('http') ? module.meet_link : `https://${module.meet_link}`} target="_blank" rel="noopener noreferrer" className="btn btn-xs btn-ghost" style={{ fontSize:11, display:'flex', alignItems:'center', gap:4 }}>
+                  <span style={{ fontSize:14 }}>🔗</span> {module.training_type === 'classroom' ? 'Location details' : 'Join Meeting'}
+                </a>
+              )}
+            </div>
             <div className="t-xs t-muted">
               {fmtDate(module.start_datetime)} — {fmtDate(module.end_datetime)}
             </div>

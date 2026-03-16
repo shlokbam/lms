@@ -35,6 +35,8 @@ class Module(Base):
     status = Column(String(20), default="draft")
     is_default = Column(Boolean, default=False)
     color = Column(String(10), default="#3B5BDB")
+    training_type = Column(String(50), default="self_paced")
+    meet_link = Column(String(500), nullable=True)
     created_at = Column(DateTime, server_default=func.now())
 
     trainer = relationship("User", back_populates="modules")

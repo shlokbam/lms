@@ -123,6 +123,8 @@ def schedule_module(module_id: int, body: schemas.ScheduleRequest,
     module.end_datetime   = datetime.fromisoformat(body.end_datetime)
     module.status = body.status
     module.color  = body.color
+    module.training_type = body.training_type
+    module.meet_link = body.meet_link
     if body.status == "published" and old_status != "published":
         _notify_trainees(db, f"📚 Module Scheduled: {module.title}",
                          f'"{module.title}" has been scheduled starting {body.start_datetime[:10]}.',

@@ -59,6 +59,8 @@ class ModuleOut(BaseModel):
     status: str
     is_default: bool
     color: Optional[str]
+    training_type: str
+    meet_link: Optional[str]
     created_at: Optional[datetime]
     class Config: from_attributes = True
 
@@ -67,6 +69,8 @@ class ScheduleRequest(BaseModel):
     end_datetime: str
     status: str = "published"
     color: str = "#3B5BDB"
+    training_type: str = "self_paced"
+    meet_link: Optional[str] = None
 
 
 # ─── Chapters ────────────────────────────────────────────────
