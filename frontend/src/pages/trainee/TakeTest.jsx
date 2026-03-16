@@ -65,7 +65,7 @@ export default function TakeTest() {
       {/* Header */}
       <div className="card card-p anim-scale mb-6" style={{ background:'linear-gradient(135deg,var(--acc-bg),var(--card))', borderColor:'var(--acc-mid)' }}>
         <div className="flex items-c gap-4">
-          <div style={{ width:52, height:52, background:'var(--acc)', borderRadius:'var(--r3)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, boxShadow:'0 6px 20px var(--acc-glow)', flexShrink:0 }}>📝</div>
+          <div style={{ width:52, height:52, background:'var(--acc)', borderRadius:'var(--r3)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, boxShadow:'0 6px 20px var(--acc-glow)', flexShrink:0 }}></div>
           <div>
             <div className="t-xs fw-700 t-muted" style={{ textTransform:'uppercase', letterSpacing:'.6px', marginBottom:4 }}>{test.test_type}-Assessment</div>
             <div style={{ fontFamily:"'DM Serif Display',serif", fontSize:20 }}>{test.title}</div>

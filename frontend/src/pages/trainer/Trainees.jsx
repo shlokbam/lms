@@ -13,14 +13,14 @@ export default function Trainees() {
     <>
       <div className="stat-row anim-up" style={{ marginBottom:24 }}>
         <div className="stat-tile st-blue">
-          <div className="st-icon st-i-blue">👥</div>
+          <div className="st-icon st-i-blue"></div>
           <div className="st-num">{trainees.length}</div>
           <div className="st-lbl">Registered Trainees</div>
         </div>
       </div>
       <div className="card tbl-wrap anim-up d1">
         {trainees.length === 0 ? (
-          <div className="empty"><div className="empty-ico">👥</div><div className="empty-title">No Trainees Yet</div></div>
+          <div className="empty"><div className="empty-ico"></div><div className="empty-title">No Trainees Yet</div></div>
         ) : (
           <table>
             <thead><tr><th>Name</th><th>Email</th><th>Department</th><th>Phone</th><th>Enrolled</th><th>Tests</th><th>Joined</th></tr></thead>

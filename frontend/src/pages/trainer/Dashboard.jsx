@@ -11,7 +11,7 @@ function phaseBadge(m, now) {
   if (!m.start_datetime) return <span className="badge b-neutral">Draft</span>
   const start = new Date(m.start_datetime), end = m.end_datetime ? new Date(m.end_datetime) : null
   if (now < start) return <span className="badge b-sky">Upcoming</span>
-  if (!end || now <= end) return <span className="badge b-live">🟢 Live</span>
+  if (!end || now <= end) return <span className="badge b-live"> Live</span>
   return <span className="badge b-neutral">Ended</span>
 }
 
@@ -46,10 +46,10 @@ export default function TrainerDashboard() {
     <>
       <div className="stat-row anim-up">
         {[
-          { lbl: 'Total Modules', val: data.total_modules, cls: 'st-gold', ico: '📚', icls: 'st-i-gold' },
-          { lbl: 'Trainees', val: data.total_trainees, cls: 'st-blue', ico: '👥', icls: 'st-i-blue' },
-          { lbl: 'Live Sessions', val: data.ongoing, cls: 'st-green', ico: '🟢', icls: 'st-i-green' },
-          { lbl: 'Upcoming', val: data.upcoming, cls: 'st-sky', ico: '📅', icls: 'st-i-sky' },
+          { lbl: 'Total Modules', val: data.total_modules, cls: 'st-gold', ico: '', icls: 'st-i-gold' },
+          { lbl: 'Trainees', val: data.total_trainees, cls: 'st-blue', ico: '', icls: 'st-i-blue' },
+          { lbl: 'Live Sessions', val: data.ongoing, cls: 'st-green', ico: '', icls: 'st-i-green' },
+          { lbl: 'Upcoming', val: data.upcoming, cls: 'st-sky', ico: '', icls: 'st-i-sky' },
         ].map(({ lbl, val, cls, ico, icls }) => (
           <div key={lbl} className={`stat-tile ${cls}`}>
             <div className={`st-icon ${icls}`}>{ico}</div>
@@ -86,7 +86,7 @@ export default function TrainerDashboard() {
           const stats = data.mod_stats?.[m.id] || {}
           return (
             <div key={m.id} className="mod-card">
-              <div className="mc-banner" style={{ background: m.color || 'var(--acc)' }}></div>
+              <div className="mc-banner" style={{ background: 'var(--acc)' }}></div>
               <div className="mc-body">
                 <div className="mc-cat">{m.category}</div>
                 <div className="mc-title">{m.title}</div>
@@ -97,13 +97,13 @@ export default function TrainerDashboard() {
                   </span>
                 </div>
                 <div style={{ fontSize:11, color:'var(--t3)', marginTop:8 }}>
-                  📅 {fmtDate(m.start_datetime)} — {fmtDate(m.end_datetime)}
+                   {fmtDate(m.start_datetime)} — {fmtDate(m.end_datetime)}
                 </div>
               </div>
               <div className="mc-foot">
                 <div className="mc-meta">
                   {phaseBadge(m, now)}
-                  <span style={{ color: 'var(--t3)', fontSize: 12 }}>👥 {stats.trainees || 0}</span>
+                  <span style={{ color: 'var(--t3)', fontSize: 12 }}> {stats.trainees || 0}</span>
                 </div>
                 <Link to={`/trainer/module/${m.id}`} className="btn btn-sm btn-primary">View →</Link>
               </div>
@@ -113,7 +113,7 @@ export default function TrainerDashboard() {
         {filtered.length === 0 && (
           <div className="card card-p" style={{ gridColumn: '1/-1' }}>
             <div className="empty">
-              <div className="empty-ico">📭</div>
+              <div className="empty-ico"></div>
               <div className="empty-title">No Modules Found</div>
               <div className="empty-sub">No modules match your current filter.</div>
             </div>

@@ -90,7 +90,7 @@ export default function Calendar() {
       <div>
         <div className="sh mb-4 anim-r"><div className="sh-title">Upcoming Events</div></div>
         {upcoming.length === 0
-          ? <div className="card card-p center" style={{ padding:32 }}><div style={{ fontSize:28,marginBottom:8 }}>✅</div><div className="t-sm t-muted">No upcoming events</div></div>
+          ? <div className="card card-p center" style={{ padding:32 }}><div style={{ fontSize:28,marginBottom:8 }}>Pass:</div><div className="t-sm t-muted">No upcoming events</div></div>
           : upcoming.map((ev,i) => (
             <a key={i} href={ev.id&&ev.type==='module'?`/trainee/module/${ev.id}`:'#'}>
               <div className="card card-p" style={{ marginBottom:10, borderLeft:`3px solid ${ev.type==='module'?(ev.color||'var(--acc)'):'var(--amber)'}` }}>
@@ -99,8 +99,8 @@ export default function Calendar() {
                   <span className={`badge ${ev.type==='module'?'b-blue':'b-amber'}`} style={{ fontSize:9, flexShrink:0 }}>{ev.type}</span>
                 </div>
                 <div style={{ fontSize:11.5, color:'var(--t2)', display:'flex', flexDirection:'column', gap:3 }}>
-                  <div>🟢 <strong>Start:</strong> {fmtTime(ev.start)}</div>
-                  {ev.end && <div>🔴 <strong>End:</strong>&nbsp;&nbsp; {fmtTime(ev.end)}</div>}
+                  <div> <strong>Start:</strong> {fmtTime(ev.start)}</div>
+                  {ev.end && <div> <strong>End:</strong>&nbsp;&nbsp; {fmtTime(ev.end)}</div>}
                 </div>
               </div>
             </a>
@@ -114,13 +114,13 @@ export default function Calendar() {
           <div style={{ position:'fixed', inset:0, zIndex:998 }} onClick={()=>setPopup(null)}></div>
           <div style={{ display:'block', position:'fixed', zIndex:999, background:'var(--card)', border:'1px solid var(--border)', borderRadius:'var(--r3)', boxShadow:'0 8px 32px rgba(0,0,0,.18)', padding:18, minWidth:260, maxWidth:320, left:popupPos.left, top:popupPos.top }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
-              <span className={`badge ${popup.type==='module'?'b-blue':'b-amber'}`}>{popup.type==='module'?'📚 Module':'📝 Test'}</span>
+              <span className={`badge ${popup.type==='module'?'b-blue':'b-amber'}`}>{popup.type==='module'?' Module':' Test'}</span>
               <button onClick={()=>setPopup(null)} style={{ background:'none',border:'none',cursor:'pointer',color:'var(--t3)',fontSize:18 }}>✕</button>
             </div>
             <div style={{ fontWeight:700, fontSize:15, marginBottom:10, lineHeight:1.4 }}>{popup.title}</div>
             <div style={{ fontSize:12.5, color:'var(--t2)', display:'flex', flexDirection:'column', gap:6 }}>
-              {popup.start && <div><span style={{ color:'var(--t3)' }}>🟢 Start</span> &nbsp;{fmtTime(popup.start)}</div>}
-              {popup.end   && <div><span style={{ color:'var(--t3)' }}>🔴 End</span> &nbsp;&nbsp;&nbsp;{fmtTime(popup.end)}</div>}
+              {popup.start && <div><span style={{ color:'var(--t3)' }}> Start</span> &nbsp;{fmtTime(popup.start)}</div>}
+              {popup.end   && <div><span style={{ color:'var(--t3)' }}> End</span> &nbsp;&nbsp;&nbsp;{fmtTime(popup.end)}</div>}
             </div>
             {popup.id && popup.type==='module' && (
               <div style={{ marginTop:12 }}>

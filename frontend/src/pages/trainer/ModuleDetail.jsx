@@ -4,7 +4,7 @@ import client from '../../api/client'
 import { fileUrl } from '../../api/fileUrl'
 
 const PHASE_LABELS = { pre: 'Pre-Session', live: 'Live', post: 'Post-Session', upcoming:'Draft' }
-const TYPE_ICO = { video:'🎬', pdf:'📄', ppt:'📊', image:'🖼️' }
+const TYPE_ICO = { video:'Vid', pdf:'PDF', ppt:'PPT', image:'Img' }
 
 function fmtDate(s) {
   if (!s) return '—'
@@ -85,10 +85,10 @@ export default function TrainerModuleDetail() {
       </div>
 
       {/* Module header */}
-      <div className="card card-p anim-up mb-6" style={{ background:`linear-gradient(135deg,${module.color||'var(--acc)'}22,var(--card))`, borderColor:`${module.color||'var(--acc)'}44` }}>
+      <div className="card card-p anim-up mb-6" style={{ background:'var(--acc-bg)', borderColor:'var(--acc-mid)' }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:16, flexWrap:'wrap' }}>
           <div>
-            <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'.8px', color:module.color||'var(--acc)', marginBottom:6 }}>{module.category}</div>
+            <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'.8px', color:'var(--acc)', marginBottom:6 }}>{module.category}</div>
             <h2 style={{ fontFamily:"'DM Serif Display',serif", fontSize:24, marginBottom:6 }}>{module.title}</h2>
             <p className="t-secondary t-sm" style={{ marginBottom:10 }}>{module.description}</p>
             <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:10 }}>
@@ -97,7 +97,7 @@ export default function TrainerModuleDetail() {
               </span>
               {module.meet_link && (
                 <a href={module.meet_link.startsWith('http') ? module.meet_link : `https://${module.meet_link}`} target="_blank" rel="noopener noreferrer" className="btn btn-xs btn-ghost" style={{ fontSize:11, display:'flex', alignItems:'center', gap:4 }}>
-                  <span style={{ fontSize:14 }}>🔗</span> {module.training_type === 'classroom' ? 'Location details' : 'Join Meeting'}
+                  <span style={{ fontSize:14 }}></span> {module.training_type === 'classroom' ? 'Location details' : 'Join Meeting'}
                 </a>
               )}
             </div>
@@ -106,7 +106,7 @@ export default function TrainerModuleDetail() {
             </div>
           </div>
           <div style={{ display:'flex', gap:8, flexShrink:0, flexWrap:'wrap' }}>
-            <Link to={`/trainer/module/${moduleId}/reports`} className="btn btn-secondary btn-sm">📊 Reports</Link>
+            <Link to={`/trainer/module/${moduleId}/reports`} className="btn btn-secondary btn-sm">PPT Reports</Link>
             <Link to={`/trainer/module/${moduleId}/test/create`} className="btn btn-gold btn-sm">+ New Test</Link>
             <button className="btn btn-primary btn-sm" onClick={()=>setAddChModal(true)}>+ Chapter</button>
             <button className="btn btn-primary btn-sm" onClick={()=>setUploadModal(true)}>↑ Upload</button>
@@ -120,7 +120,7 @@ export default function TrainerModuleDetail() {
           <div className="sh mb-4"><div className="sh-title">Course Content</div><div className="sh-sub">{chapters.length} chapters</div></div>
           {chapters.length === 0 && (
             <div className="card card-p">
-              <div className="empty"><div className="empty-ico">📚</div><div className="empty-title">No chapters yet</div>
+              <div className="empty"><div className="empty-ico"></div><div className="empty-title">No chapters yet</div>
                 <div className="empty-sub">Click "+ Chapter" to add your first chapter.</div>
               </div>
             </div>
@@ -144,7 +144,7 @@ export default function TrainerModuleDetail() {
                         ? <div style={{ padding:'14px 16px', color:'var(--t3)', fontSize:13 }}>No materials in this chapter yet.</div>
                         : mats.map(mat => (
                           <div key={mat.id} className="mat-row">
-                            <div className="mat-ico" style={{ background:'var(--acc-bg)' }}>{TYPE_ICO[mat.file_type]||'📁'}</div>
+                            <div className="mat-ico" style={{ background:'var(--acc-bg)' }}>{TYPE_ICO[mat.file_type]||''}</div>
                             <div className="mat-info">
                               <div className="mat-title">{mat.title}</div>
                               <div className="mat-sub">{mat.file_type} · <span className="badge b-blue" style={{ fontSize:9 }}>{mat.release_phase}</span></div>
@@ -169,7 +169,7 @@ export default function TrainerModuleDetail() {
               <div className="sh-sub mb-2">Uncategorised Materials</div>
               {mat_by_chapter[0].map(mat => (
                 <div key={mat.id} className="mat-row card" style={{ borderRadius:'var(--r2)' }}>
-                  <div className="mat-ico" style={{ background:'var(--acc-bg)' }}>{TYPE_ICO[mat.file_type]||'📁'}</div>
+                  <div className="mat-ico" style={{ background:'var(--acc-bg)' }}>{TYPE_ICO[mat.file_type]||''}</div>
                   <div className="mat-info"><div className="mat-title">{mat.title}</div></div>
                   <div className="mat-actions">
                     <a href={fileUrl(mat.file_path)} target="_blank" rel="noopener" className="btn btn-xs btn-secondary">↗</a>
@@ -187,7 +187,7 @@ export default function TrainerModuleDetail() {
           <div className="sh mb-3"><div className="sh-title">Tests</div></div>
           {tests.length === 0 ? (
             <div className="card card-p mb-4"><div className="empty" style={{ padding:24 }}>
-              <div className="empty-ico" style={{ fontSize:20, width:48, height:48 }}>📝</div>
+              <div className="empty-ico" style={{ fontSize:20, width:48, height:48 }}></div>
               <div className="empty-title" style={{ fontSize:15 }}>No Tests Yet</div>
               <Link to={`/trainer/module/${moduleId}/test/create`} className="btn btn-gold btn-sm" style={{ marginTop:8 }}>Create Test</Link>
             </div></div>

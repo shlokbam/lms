@@ -42,7 +42,7 @@ export default function TestResult() {
           </div>
         </div>
 
-        <div style={{ fontSize:48, marginBottom:12 }}>{passed?'🎉':'😔'}</div>
+        <div style={{ fontSize:48, marginBottom:12 }}>{passed?'':''}</div>
         <h2 style={{ fontFamily:"'DM Serif Display',serif", fontSize:28, marginBottom:8 }}>{passed?'Congratulations!':'Better Luck Next Time'}</h2>
         <p className="t-secondary mb-6">You scored <strong>{score}</strong> out of <strong>{total}</strong> marks</p>
 
@@ -53,7 +53,7 @@ export default function TestResult() {
           <div style={{ width:1, background:'var(--border)' }}></div>
           <div className="center"><div style={{ fontFamily:"'DM Serif Display',serif", fontSize:26 }}>{test?.passing_marks}%</div><div className="t-xs t-muted">Pass Mark</div></div>
         </div>
-        <div><span className={`badge ${passed?'b-green':'b-red'}`} style={{ fontSize:15, padding:'10px 24px' }}>{passed?'✅ PASSED':'❌ FAILED'}</span></div>
+        <div><span className={`badge ${passed?'b-green':'b-red'}`} style={{ fontSize:15, padding:'10px 24px' }}>{passed?'Pass: PASSED':'Fail: FAILED'}</span></div>
       </div>
 
       {/* Answer Review */}
@@ -65,7 +65,7 @@ export default function TestResult() {
           <div key={q.id} className="q-card anim-up" style={{ animationDelay:`${i*35}ms`, borderColor:ok?'rgba(16,185,129,.3)':'rgba(239,68,68,.3)' }}>
             <div className="flex items-c gap-3 mb-4">
               <div className="q-num-badge" style={{ background:ok?'var(--green)':'var(--red)' }}>{i+1}</div>
-              <span>{ok?'✅':'❌'}</span>
+              <span>{ok?'Pass:':'Fail:'}</span>
               <span className="t-xs t-muted fw-700" style={{ textTransform:'uppercase' }}>{q.marks} mark{q.marks>1?'s':''}</span>
             </div>
             <div style={{ fontSize:15, fontWeight:600, marginBottom:16, lineHeight:1.5 }}>{q.question_text}</div>

@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import client from '../../api/client'
 import { fileUrl } from '../../api/fileUrl'
 
-const TYPE_ICO = { video:'🎬', pdf:'📄', ppt:'📊', image:'🖼️' }
+const TYPE_ICO = { video:'Vid', pdf:'PDF', ppt:'PPT', image:'Img' }
 const PHASE_ORDER = { pre:1, live:2, post:3, upcoming:0 }
 
 function canAccess(matPhase, modulePhase) {
@@ -48,8 +48,8 @@ export default function TraineeModule() {
   const { module, phase, chapters, mat_by_chapter, tests, progress_map, attempts_map, overall_pct, total_mats, done_mats } = data
 
   function phaseBadge() {
-    if (phase === 'live') return <span className="badge b-live">🟢 Live</span>
-    if (phase === 'pre') return <span className="badge b-sky">📅 Upcoming</span>
+    if (phase === 'live') return <span className="badge b-live"> Live</span>
+    if (phase === 'pre') return <span className="badge b-sky"> Upcoming</span>
     return <span className="badge b-neutral">Ended</span>
   }
 
@@ -58,10 +58,10 @@ export default function TraineeModule() {
       <div style={{ marginBottom:18 }}><Link to="/trainee/dashboard" className="btn btn-ghost btn-sm">← Dashboard</Link></div>
 
       {/* Module Header */}
-      <div className="card card-p anim-up mb-6" style={{ background:`linear-gradient(135deg,${module.color||'var(--acc)'}22,var(--card))` }}>
+      <div className="card card-p anim-up mb-6" style={{ background:'var(--acc-bg)' }}>
         <div style={{ display:'flex', justifyContent:'space-between', gap:16, flexWrap:'wrap' }}>
           <div>
-            <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', color:module.color||'var(--acc)', marginBottom:6 }}>{module.category}</div>
+            <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', color:'var(--acc)', marginBottom:6 }}>{module.category}</div>
             <h2 style={{ fontFamily:"'DM Serif Display',serif", fontSize:22, marginBottom:6 }}>{module.title}</h2>
             <p className="t-sm t-secondary" style={{ marginBottom:10 }}>{module.description}</p>
             <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:10 }}>
@@ -70,7 +70,7 @@ export default function TraineeModule() {
               </span>
               {module.meet_link && canAccess('live', phase) && (
                 <a href={module.meet_link.startsWith('http') ? module.meet_link : `https://${module.meet_link}`} target="_blank" rel="noopener noreferrer" className="btn btn-xs btn-ghost" style={{ fontSize:11, display:'flex', alignItems:'center', gap:4 }}>
-                  <span style={{ fontSize:14 }}>🔗</span> {module.training_type === 'classroom' ? 'Location details' : 'Join Meeting'}
+                  <span style={{ fontSize:14 }}></span> {module.training_type === 'classroom' ? 'Location details' : 'Join Meeting'}
                 </a>
               )}
             </div>
@@ -118,21 +118,21 @@ export default function TraineeModule() {
                           const done = prog?.completed
                           return (
                             <div key={mat.id} className="mat-row" style={{ opacity:accessible?1:0.5 }}>
-                              <div className="mat-ico" style={{ background:accessible?'var(--acc-bg)':'var(--card2)' }}>{accessible?TYPE_ICO[mat.file_type]:'🔒'}</div>
+                              <div className="mat-ico" style={{ background:accessible?'var(--acc-bg)':'var(--card2)', fontSize:12, fontWeight:700, color:accessible?'var(--acc)':'var(--t4)' }}>{accessible?TYPE_ICO[mat.file_type]:'Locked'}</div>
                               <div className="mat-info">
                                 <div className="mat-title">{mat.title}</div>
                                 <div className="mat-sub">
                                   {accessible
                                     ? <span className="badge b-blue" style={{ fontSize:9 }}>{mat.release_phase}</span>
-                                    : <span style={{ fontSize:11, color:'var(--t4)' }}>🔒 Opens when session starts</span>
+                                    : <span style={{ fontSize:11, color:'var(--t4)' }}>Locked: Opens when session starts</span>
                                   }
                                 </div>
                               </div>
                               {accessible && (
                                 <div className="mat-actions">
                                   {mat.file_type === 'video'
-                                    ? <button className="btn btn-xs btn-primary" onClick={()=>setVideoModal(mat)}>▶ Play</button>
-                                    : <a href={fileUrl(mat.file_path)} target="_blank" rel="noopener" className="btn btn-xs btn-primary">↗ Open</a>
+                                    ? <button className="btn btn-xs btn-primary" onClick={()=>setVideoModal(mat)}>Play Video</button>
+                                    : <a href={fileUrl(mat.file_path)} target="_blank" rel="noopener noreferrer" className="btn btn-xs btn-primary">Open File</a>
                                   }
                                   <button className={`btn btn-xs ${done?'btn-secondary':'btn-ghost'}`} onClick={()=>markDone(mat.id, !done)}>
                                     {done?'✓ Done':'Mark Done'}
@@ -172,7 +172,7 @@ export default function TraineeModule() {
                   {att ? (
                     <div>
                       <div style={{ fontFamily:"'DM Serif Display',serif", fontSize:24, color:att.passed?'var(--green)':'var(--red)' }}>{Math.round(att.percentage)}%</div>
-                      <span className={`badge ${att.passed?'b-green':'b-red'}`}>{att.passed?'✅ PASSED':'❌ FAILED'}</span>
+                      <span className={`badge ${att.passed?'b-green':'b-red'}`}>{att.passed?'Pass: PASSED':'Fail: FAILED'}</span>
                     </div>
                   ) : canTake ? (
                     <button className="btn btn-gold btn-sm" style={{ marginTop:8 }} onClick={()=>startTest(t.id)}>Take Test →</button>

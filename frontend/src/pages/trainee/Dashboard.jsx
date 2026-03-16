@@ -8,7 +8,7 @@ function fmtDate(s) {
 }
 
 function phaseBadge(phase) {
-  if (phase === 'live') return <span className="badge b-live">🟢 Live</span>
+  if (phase === 'live') return <span className="badge b-live"> Live</span>
   if (phase === 'pre') return <span className="badge b-sky">Upcoming</span>
   return <span className="badge b-neutral">Ended</span>
 }
@@ -39,10 +39,10 @@ export default function TraineeDashboard() {
     <>
       <div className="stat-row anim-up">
         {[
-          { lbl:'Live Sessions', val:ongoing.length, cls:'st-green', ico:'🟢', icls:'st-i-green', f:'live' },
-          { lbl:'Upcoming', val:upcoming.length, cls:'st-blue', ico:'📅', icls:'st-i-blue', f:'upcoming' },
-          { lbl:'Completed', val:completed.length, cls:'st-gold', ico:'✅', icls:'st-i-gold', f:'ended' },
-          { lbl:'Tests Passed', val:`${passed_tests}/${total_tests}`, cls:'st-violet', ico:'📝', icls:'st-i-violet' },
+          { lbl:'Live Sessions', val:ongoing.length, cls:'st-green', ico:'', icls:'st-i-green', f:'live' },
+          { lbl:'Upcoming', val:upcoming.length, cls:'st-blue', ico:'', icls:'st-i-blue', f:'upcoming' },
+          { lbl:'Completed', val:completed.length, cls:'st-gold', ico:'Pass:', icls:'st-i-gold', f:'ended' },
+          { lbl:'Tests Passed', val:`${passed_tests}/${total_tests}`, cls:'st-violet', ico:'', icls:'st-i-violet' },
         ].map(({ lbl,val,cls,ico,icls,f }) => (
           <div key={lbl} className={`stat-tile ${cls}`} onClick={() => f && setFilter(f)} style={{ cursor: f ? 'pointer' : 'default' }}>
             <div className={`st-icon ${icls}`}>{ico}</div>
@@ -76,11 +76,11 @@ export default function TraineeDashboard() {
 
           {showLive && ongoing.length > 0 && (
             <>
-              <div className="sh anim-up mb-3"><div className="sh-title">🟢 Live Now</div></div>
+              <div className="sh anim-up mb-3"><div className="sh-title"> Live Now</div></div>
               <div className="mod-grid" style={{ marginBottom:20 }}>
                 {ongoing.map(m => (
                   <div key={m.id} className="mod-card anim-up">
-                    <div className="mc-banner" style={{ background: m.color||'var(--acc)', height:4 }}></div>
+                    <div className="mc-banner" style={{ background: 'var(--acc)', height:4 }}></div>
                     <div className="mc-body">
                       <div className="mc-cat">{m.category}</div>
                       <div className="mc-title">{m.title}</div>
@@ -90,7 +90,7 @@ export default function TraineeDashboard() {
                           {m.training_type === 'virtual' ? 'Virtual' : m.training_type === 'classroom' ? 'Classroom' : 'Self-paced'}
                         </span>
                       </div>
-                      <div style={{ fontSize:12, color:'var(--t3)', marginTop:6 }}>🟢 Ends {fmtDate(m.end_datetime)}</div>
+                      <div style={{ fontSize:12, color:'var(--t3)', marginTop:6 }}> Ends {fmtDate(m.end_datetime)}</div>
                     </div>
                     <div className="mc-foot">
                       {phaseBadge(m.phase)}
@@ -104,11 +104,11 @@ export default function TraineeDashboard() {
 
           {showUpcoming && upcoming.length > 0 && (
             <>
-              <div className="sh anim-up mb-3"><div className="sh-title">📅 Upcoming</div></div>
+              <div className="sh anim-up mb-3"><div className="sh-title"> Upcoming</div></div>
               <div className="mod-grid" style={{ marginBottom:20 }}>
                 {upcoming.map(m => (
                   <div key={m.id} className="mod-card anim-up">
-                    <div className="mc-banner" style={{ background: m.color||'var(--acc)' }}></div>
+                    <div className="mc-banner" style={{ background: 'var(--acc)' }}></div>
                     <div className="mc-body">
                       <div className="mc-cat">{m.category}</div>
                       <div className="mc-title">{m.title}</div>
@@ -117,7 +117,7 @@ export default function TraineeDashboard() {
                           {m.training_type === 'virtual' ? 'Virtual' : m.training_type === 'classroom' ? 'Classroom' : 'Self-paced'}
                         </span>
                       </div>
-                      <div style={{ fontSize:12, color:'var(--t3)', marginTop:6 }}>📅 Starts {fmtDate(m.start_datetime)}</div>
+                      <div style={{ fontSize:12, color:'var(--t3)', marginTop:6 }}> Starts {fmtDate(m.start_datetime)}</div>
                     </div>
                     <div className="mc-foot">
                       {phaseBadge(m.phase)}
@@ -135,7 +135,7 @@ export default function TraineeDashboard() {
               <div className="mod-grid">
                 {completed.map(m => (
                   <div key={m.id} className="mod-card anim-up" style={{ opacity:.7 }}>
-                    <div className="mc-banner" style={{ background: m.color||'var(--acc)' }}></div>
+                    <div className="mc-banner" style={{ background: 'var(--acc)' }}></div>
                     <div className="mc-body">
                       <div className="mc-cat">{m.category}</div>
                       <div className="mc-title">{m.title}</div>
@@ -156,14 +156,14 @@ export default function TraineeDashboard() {
           )}
 
           {ongoing.length === 0 && upcoming.length === 0 && completed.length === 0 && (
-            <div className="card card-p"><div className="empty"><div className="empty-ico">📚</div><div className="empty-title">No Modules Yet</div><div className="empty-sub">You'll see your enrolled modules here once your trainer publishes them.</div></div></div>
+            <div className="card card-p"><div className="empty"><div className="empty-ico"></div><div className="empty-title">No Modules Yet</div><div className="empty-sub">You'll see your enrolled modules here once your trainer publishes them.</div></div></div>
           )}
           {filter !== 'all' && (
             (filter === 'live' && ongoing.length === 0) ||
             (filter === 'upcoming' && upcoming.length === 0) ||
             (filter === 'ended' && completed.length === 0)
           ) && (
-            <div className="card card-p"><div className="empty"><div className="empty-ico">📭</div><div className="empty-title">No {filter} modules</div><div className="empty-sub">You don't have any modules in this category.</div></div></div>
+            <div className="card card-p"><div className="empty"><div className="empty-ico"></div><div className="empty-title">No {filter} modules</div><div className="empty-sub">You don't have any modules in this category.</div></div></div>
           )}
         </div>
 
@@ -173,7 +173,7 @@ export default function TraineeDashboard() {
           <div className="sh anim-r mb-3"><div className="sh-title">Notifications</div><Link to="/trainee/notifications" style={{ fontSize:13, color:'var(--acc)', fontWeight:600 }}>View all →</Link></div>
           <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
             {notifications.length === 0
-              ? <div className="card card-p center" style={{ padding:24, color:'var(--t3)', fontSize:13 }}>🎉 All caught up!</div>
+              ? <div className="card card-p center" style={{ padding:24, color:'var(--t3)', fontSize:13 }}> All caught up!</div>
               : notifications.map(n => (
                 <a key={n.id} href={n.link||'#'}>
                   <div className={`card card-p${n.is_read?'':' anim-r'}`} style={{ borderLeft:`3px solid ${n.is_read?'var(--border)':'var(--acc)'}`, padding:12 }}>

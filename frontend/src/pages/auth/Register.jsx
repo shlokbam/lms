@@ -36,7 +36,7 @@ export default function Register() {
         <div className="auth-grid"></div>
         <div className="auth-glow"></div>
         <div className="auth-left-inner">
-          <div className="auth-logo">🦅</div>
+          <div className="auth-logo"></div>
           <h1>Join Eagle LMS</h1>
           <div className="auth-tagline">START YOUR TRAINING TODAY</div>
           <p>Register to access professional security &amp; facility management training modules.</p>

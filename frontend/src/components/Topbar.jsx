@@ -57,7 +57,7 @@ export default function Topbar({ pageTitle, actions }) {
   }
 
   const icons = { info: 'i', welcome: 'w', module_published: 'm', material_upload: 'f', test_created: 't' }
-  const colors = { info: 'var(--sky-bg)', welcome: 'var(--eagle-gold-bg)', module_published: 'var(--acc-bg)', material_upload: 'var(--green-bg)', test_created: 'var(--violet-bg)' }
+  const colors = { info: 'var(--sky-bg)', welcome: 'var(--acc-bg)', module_published: 'var(--acc-bg)', material_upload: 'var(--green-bg)', test_created: 'var(--violet-bg)' }
 
   return (
     <header className="topbar">

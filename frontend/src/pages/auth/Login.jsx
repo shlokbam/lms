@@ -32,7 +32,7 @@ export default function Login() {
         <div className="auth-grid"></div>
         <div className="auth-glow"></div>
         <div className="auth-left-inner">
-          <div className="auth-logo">🦅</div>
+          <div className="auth-logo"></div>
           <h1>Eagle Security LMS</h1>
           <div className="auth-tagline">EAGLE INDUSTRIAL SERVICES PVT. LTD.</div>
           <p>Professional training &amp; compliance platform for India's leading security &amp; facility management workforce.</p>

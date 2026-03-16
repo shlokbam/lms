@@ -18,13 +18,13 @@ export default function Reports() {
     <>
       <div style={{ marginBottom:18 }}><Link to={`/trainer/module/${moduleId}`} className="btn btn-ghost btn-sm">← {module.title}</Link></div>
       <div className="card card-p anim-up mb-6" style={{ background:'linear-gradient(135deg,var(--sky-bg),var(--card))', borderColor:'rgba(14,165,233,.2)' }}>
-        <h2 style={{ fontFamily:"'DM Serif Display',serif", fontSize:22, marginBottom:4 }}>📊 {module.title}</h2>
+        <h2 style={{ fontFamily:"'DM Serif Display',serif", fontSize:22, marginBottom:4 }}>PPT {module.title}</h2>
         <p className="t-sm t-secondary">Performance Report · {report_data.length} trainees · {tests.length} tests</p>
       </div>
       {tests.length === 0 ? (
         <div className="card card-p">
           <div className="empty">
-            <div className="empty-ico">📝</div>
+            <div className="empty-ico"></div>
             <div className="empty-title">No Tests Created</div>
             <div className="empty-sub">Create tests to see trainee performance data here.</div>
             <Link to={`/trainer/module/${moduleId}/test/create`} className="btn btn-primary">Create Test</Link>

@@ -60,7 +60,7 @@ export default function TrainerModules() {
 
   function phaseBadge(m) {
     const p = getPhase(m)
-    if (p === 'live') return <span className="badge b-live">🟢 Live</span>
+    if (p === 'live') return <span className="badge b-live"> Live</span>
     if (p === 'upcoming') return <span className="badge b-sky">Upcoming</span>
     if (p === 'ended') return <span className="badge b-neutral">Ended</span>
     return <span className="badge b-neutral">Draft</span>
@@ -100,7 +100,7 @@ export default function TrainerModules() {
           const stats = data.mod_stats?.[m.id] || {}
           return (
             <div key={m.id} className="mod-card anim-up">
-              <div className="mc-banner" style={{ background: m.color || 'var(--acc)' }}></div>
+              <div className="mc-banner" style={{ background: 'var(--acc)' }}></div>
               <div className="mc-body">
                 <div className="mc-cat">{m.category}</div>
                 <div className="mc-title">{m.title}</div>
@@ -111,13 +111,13 @@ export default function TrainerModules() {
                     {m.training_type === 'virtual' ? 'Virtual' : m.training_type === 'classroom' ? 'Classroom' : 'Self-paced'}
                   </span>
                   <span style={{ fontSize:11, color:'var(--t3)' }}>
-                    📅 {fmtDate(m.start_datetime)} — {fmtDate(m.end_datetime)}
+                     {fmtDate(m.start_datetime)} — {fmtDate(m.end_datetime)}
                   </span>
                 </div>
                 <div style={{ marginTop:8, display:'flex', gap:10, fontSize:12, color:'var(--t3)' }}>
-                  <span>📚 {stats.chapters||0} chapters</span>
-                  <span>📎 {stats.materials||0} files</span>
-                  <span>👥 {stats.trainees||0} trainees</span>
+                  <span> {stats.chapters||0} chapters</span>
+                  <span> {stats.materials||0} files</span>
+                  <span> {stats.trainees||0} trainees</span>
                 </div>
               </div>
               <div className="mc-foot" style={{ gap:6 }}>
@@ -131,7 +131,7 @@ export default function TrainerModules() {
         })}
         {filtered.length === 0 && (
           <div className="card card-p" style={{ gridColumn:'1/-1' }}>
-            <div className="empty"><div className="empty-ico">📭</div><div className="empty-title">No modules found</div></div>
+            <div className="empty"><div className="empty-ico"></div><div className="empty-title">No modules found</div></div>
           </div>
         )}
       </div>
@@ -180,13 +180,7 @@ export default function TrainerModules() {
               </div>
             )}
             <div className="form-group">
-              <label className="form-label">Card Colour</label>
-              <div className="color-grid">
-                {COLORS.map(c => (
-                  <div key={c} className={`color-dot${schedForm.color===c?' selected':''}`}
-                    style={{ background:c }} onClick={()=>setSchedForm(f=>({...f,color:c}))} />
-                ))}
-              </div>
+
             </div>
             <button className="btn btn-gold btn-md w-full" style={{ justifyContent:'center' }} onClick={saveSchedule} disabled={saving}>
               {saving ? 'Saving…' : 'Save Schedule'}
