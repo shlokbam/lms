@@ -21,6 +21,9 @@ export default function TrainerModuleDetail() {
   const [uploading, setUploading] = useState(false)
   const [uploadForm, setUploadForm] = useState({ title:'', phase:'pre', chapter_id:'' })
   const [uploadModal, setUploadModal] = useState(false)
+  const [schedModal, setSchedModal] = useState(false)
+  const [schedForm, setSchedForm] = useState({ start_datetime:'', end_datetime:'', status:'published', color:'#3B5BDB', training_type:'self_paced', meet_link:'' })
+  const [savingSched, setSavingSched] = useState(false)
   const fileRef = useRef()
 
   useEffect(() => { load() }, [moduleId])
@@ -69,6 +72,25 @@ export default function TrainerModuleDetail() {
     } finally { setUploading(false) }
   }
 
+  async function saveSchedule() {
+    setSavingSched(true)
+    try {
+      await client.post(`/api/trainer/module/${moduleId}/schedule`, schedForm)
+      setSchedModal(false); load()
+    } catch {} finally { setSavingSched(false) }
+  }
+
+  function openSched() {
+    if (!module) return
+    setSchedModal(true)
+    setSchedForm({
+      start_datetime: module.start_datetime ? module.start_datetime.replace(' ','T').slice(0,16) : '',
+      end_datetime:   module.end_datetime   ? module.end_datetime.replace(' ','T').slice(0,16)   : '',
+      status: module.status, color: module.color || '#3B5BDB',
+      training_type: module.training_type || 'self_paced', meet_link: module.meet_link || ''
+    })
+  }
+
   async function deleteTest(testId) {
     if (!confirm('Delete this test and all attempt records?')) return
     await client.delete(`/api/trainer/module/${moduleId}/test/${testId}`); load()
@@ -106,6 +128,7 @@ export default function TrainerModuleDetail() {
             </div>
           </div>
           <div style={{ display:'flex', gap:8, flexShrink:0, flexWrap:'wrap' }}>
+            <button className="btn btn-gold btn-sm" onClick={openSched}>Schedule</button>
             <Link to={`/trainer/module/${moduleId}/reports`} className="btn btn-secondary btn-sm">PPT Reports</Link>
             <Link to={`/trainer/module/${moduleId}/test/create`} className="btn btn-gold btn-sm">+ New Test</Link>
             <button className="btn btn-primary btn-sm" onClick={()=>setAddChModal(true)}>+ Chapter</button>
@@ -289,6 +312,56 @@ export default function TrainerModuleDetail() {
                 {uploading ? 'Uploading…' : '↑ Upload File'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule Modal */}
+      {schedModal && (
+        <div className="modal-bg open" onClick={e=>e.target===e.currentTarget&&setSchedModal(false)}>
+          <div className="modal" onClick={e=>e.stopPropagation()}>
+            <button className="modal-close" onClick={()=>setSchedModal(false)}>✕</button>
+            <div className="modal-title">Schedule Module</div>
+            <div className="modal-sub">{module.title}</div>
+            <div className="g2">
+              <div className="form-group">
+                <label className="form-label">Start Date & Time</label>
+                <input className="form-input" type="datetime-local" value={schedForm.start_datetime}
+                  onChange={e=>setSchedForm(f=>({...f,start_datetime:e.target.value}))} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">End Date & Time</label>
+                <input className="form-input" type="datetime-local" value={schedForm.end_datetime}
+                  onChange={e=>setSchedForm(f=>({...f,end_datetime:e.target.value}))} />
+              </div>
+            </div>
+            <div className="g2">
+              <div className="form-group">
+                <label className="form-label">Status</label>
+                <select className="form-select" value={schedForm.status} onChange={e=>setSchedForm(f=>({...f,status:e.target.value}))}>
+                  <option value="published">Published</option>
+                  <option value="draft">Draft</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Training Type</label>
+                <select className="form-select" value={schedForm.training_type} onChange={e=>setSchedForm(f=>({...f,training_type:e.target.value}))}>
+                  <option value="self_paced">Self-paced</option>
+                  <option value="virtual">Virtual</option>
+                  <option value="classroom">Classroom</option>
+                </select>
+              </div>
+            </div>
+            {schedForm.training_type !== 'self_paced' && (
+              <div className="form-group">
+                <label className="form-label">Meeting Link / Location</label>
+                <input className="form-input" placeholder="https://meet.google.com/..." value={schedForm.meet_link || ''}
+                  onChange={e=>setSchedForm(f=>({...f,meet_link:e.target.value}))} />
+              </div>
+            )}
+            <button className="btn btn-gold btn-md w-full" style={{ justifyContent:'center' }} onClick={saveSchedule} disabled={savingSched}>
+              {savingSched ? 'Saving…' : 'Save Schedule'}
+            </button>
           </div>
         </div>
       )}

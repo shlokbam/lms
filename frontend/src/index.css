@@ -288,7 +288,6 @@ tbody tr:hover td{background:var(--acc-bg)}
 .mod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:18px}
 .mod-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r5);overflow:hidden;transition:all .22s;box-shadow:var(--s1)}
 .mod-card:hover{transform:translateY(-3px);box-shadow:var(--s4);border-color:var(--acc)}
-.mc-banner{height:6px}
 .mc-body{padding:20px}
 .mc-cat{font-size:11px;font-weight:700;color:var(--primary-blue);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
 .mc-title{font-family:'Manrope',sans-serif;font-weight:800;font-size:16px;margin-bottom:6px;line-height:1.35}

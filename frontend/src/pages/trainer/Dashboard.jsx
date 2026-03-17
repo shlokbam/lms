@@ -4,7 +4,8 @@ import client from '../../api/client'
 
 function fmtDate(s) {
   if (!s) return '—'
-  return new Date(s).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+  return new Date(s).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) + ' ' +
+    new Date(s).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true })
 }
 
 function phaseBadge(m, now) {
@@ -86,7 +87,6 @@ export default function TrainerDashboard() {
           const stats = data.mod_stats?.[m.id] || {}
           return (
             <div key={m.id} className="mod-card">
-              <div className="mc-banner" style={{ background: 'var(--acc)' }}></div>
               <div className="mc-body">
                 <div className="mc-cat">{m.category}</div>
                 <div className="mc-title">{m.title}</div>

@@ -4,7 +4,8 @@ import client from '../../api/client'
 
 function fmtDate(s) {
   if (!s) return '—'
-  return new Date(s).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
+  return new Date(s).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) + ' ' +
+    new Date(s).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true })
 }
 
 function phaseBadge(phase) {
@@ -80,7 +81,6 @@ export default function TraineeDashboard() {
               <div className="mod-grid" style={{ marginBottom:20 }}>
                 {ongoing.map(m => (
                   <div key={m.id} className="mod-card anim-up">
-                    <div className="mc-banner" style={{ background: 'var(--acc)', height:4 }}></div>
                     <div className="mc-body">
                       <div className="mc-cat">{m.category}</div>
                       <div className="mc-title">{m.title}</div>
@@ -108,7 +108,6 @@ export default function TraineeDashboard() {
               <div className="mod-grid" style={{ marginBottom:20 }}>
                 {upcoming.map(m => (
                   <div key={m.id} className="mod-card anim-up">
-                    <div className="mc-banner" style={{ background: 'var(--acc)' }}></div>
                     <div className="mc-body">
                       <div className="mc-cat">{m.category}</div>
                       <div className="mc-title">{m.title}</div>
@@ -135,7 +134,6 @@ export default function TraineeDashboard() {
               <div className="mod-grid">
                 {completed.map(m => (
                   <div key={m.id} className="mod-card anim-up" style={{ opacity:.7 }}>
-                    <div className="mc-banner" style={{ background: 'var(--acc)' }}></div>
                     <div className="mc-body">
                       <div className="mc-cat">{m.category}</div>
                       <div className="mc-title">{m.title}</div>

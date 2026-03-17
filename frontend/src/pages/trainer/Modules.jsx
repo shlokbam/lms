@@ -6,8 +6,8 @@ const COLORS = ['#3B5BDB','#F04438','#0BA5EC','#7C3AED','#F79009','#12B76A','#6D
 
 function fmtDate(s) {
   if (!s) return '—'
-  const d = new Date(s)
-  return d.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
+  return new Date(s).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) + ' ' +
+    new Date(s).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true })
 }
 
 export default function TrainerModules() {
@@ -100,7 +100,6 @@ export default function TrainerModules() {
           const stats = data.mod_stats?.[m.id] || {}
           return (
             <div key={m.id} className="mod-card anim-up">
-              <div className="mc-banner" style={{ background: 'var(--acc)' }}></div>
               <div className="mc-body">
                 <div className="mc-cat">{m.category}</div>
                 <div className="mc-title">{m.title}</div>
@@ -115,9 +114,6 @@ export default function TrainerModules() {
                   </span>
                 </div>
                 <div style={{ marginTop:8, display:'flex', gap:10, fontSize:12, color:'var(--t3)' }}>
-                  <span> {stats.chapters||0} chapters</span>
-                  <span> {stats.materials||0} files</span>
-                  <span> {stats.trainees||0} trainees</span>
                 </div>
               </div>
               <div className="mc-foot" style={{ gap:6 }}>
