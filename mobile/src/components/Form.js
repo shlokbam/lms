@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
 import { theme } from '../theme/theme';
-import { Typography } from './UI';
+import { Typography, Spacer } from './UI';
+export { Spacer };
 
 export const Input = ({ label, placeholder, value, onChangeText, secureTextEntry, ...props }) => (
   <View style={styles.group}>
@@ -19,9 +20,6 @@ export const Input = ({ label, placeholder, value, onChangeText, secureTextEntry
   </View>
 );
 
-export const Spacer = ({ h, w }) => (
-  <View style={{ height: h || 0, width: w || 0 }} />
-);
 
 const styles = StyleSheet.create({
   group: {

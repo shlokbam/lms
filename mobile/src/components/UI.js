@@ -1,6 +1,10 @@
 import React from 'react';
-import { Text, TouchableOpacity, StyleSheet, View } from 'react-native';
+import { Text, TouchableOpacity, StyleSheet, View, ActivityIndicator } from 'react-native';
 import { theme } from '../theme/theme';
+
+export const Spacer = ({ h, w }) => (
+  <View style={{ height: h || 0, width: w || 0 }} />
+);
 
 export const Typography = ({ variant = 'body', style, children, ...props }) => {
   const getStyle = () => {
@@ -59,6 +63,31 @@ export const Button = ({ title, onPress, variant = 'primary', style, textStyle, 
 export const Card = ({ children, style, padding = true }) => (
   <View style={[styles.card, padding && { padding: theme.spacing.md }, style]}>
     {children}
+  </View>
+);
+
+export const ThemedModal = ({ visible, title, message, onConfirm, confirmText = "OK" }) => (
+  <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', padding: 30, zIndex: 9999, display: visible ? 'flex' : 'none' }]}>
+    <Card style={{ alignItems: 'center', padding: 30 }}>
+      {title && <Typography variant="h2" style={{ textAlign: 'center', marginBottom: 12 }}>{title}</Typography>}
+      <Typography style={{ textAlign: 'center', color: theme.colors.t2, marginBottom: 24, lineHeight: 22 }}>
+        {message}
+      </Typography>
+      <Button 
+        title={confirmText} 
+        onPress={onConfirm} 
+        style={{ width: '100%' }}
+      />
+    </Card>
+  </View>
+);
+
+export const PremiumLoading = ({ message = "Loading content...", subtext = "Please wait while we prepare your experience" }) => (
+  <View style={{ flex: 1, backgroundColor: theme.colors.bg, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
+    <ActivityIndicator size="large" color={theme.colors.acc} />
+    <Spacer h={24} />
+    <Typography variant="h3" style={{ textAlign: 'center', opacity: 0.8 }}>{message}</Typography>
+    <Typography variant="caption" style={{ textAlign: 'center', opacity: 0.6, marginTop: 8 }}>{subtext}</Typography>
   </View>
 );
 

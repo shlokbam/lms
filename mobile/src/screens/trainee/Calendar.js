@@ -7,7 +7,7 @@ import {
   RefreshControl
 } from 'react-native';
 import { theme } from '../../theme/theme';
-import { Typography, Card } from '../../components/UI';
+import { Typography, Card, PremiumLoading } from '../../components/UI';
 import { Spacer } from '../../components/Form';
 import api from '../../api/api';
 import { 
@@ -21,6 +21,7 @@ import {
 
 export default function Calendar({ navigation }) {
   const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -34,6 +35,7 @@ export default function Calendar({ navigation }) {
     } catch (e) {
       console.error(e);
     } finally {
+      setLoading(false);
       setRefreshing(false);
     }
   };
@@ -111,14 +113,18 @@ export default function Calendar({ navigation }) {
             </TouchableOpacity>
           ))
         ) : (
-          <View style={styles.emptyState}>
-            <CalIcon size={48} color={theme.colors.card2} />
-            <Spacer h={16} />
-            <Typography variant="caption">No upcoming events scheduled.</Typography>
-          </View>
+          !loading && (
+            <View style={styles.emptyState}>
+              <CalIcon size={48} color={theme.colors.card2} />
+              <Spacer h={16} />
+              <Typography variant="caption">No upcoming events scheduled.</Typography>
+            </View>
+          )
         )}
         <Spacer h={40} />
       </ScrollView>
+
+      {loading && !events.length && <PremiumLoading message="Checking your calendar..." />}
     </View>
   );
 }

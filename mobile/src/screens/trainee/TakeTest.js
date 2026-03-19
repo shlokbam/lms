@@ -8,7 +8,7 @@ import {
   Alert
 } from 'react-native';
 import { theme } from '../../theme/theme';
-import { Typography, Button, Card } from '../../components/UI';
+import { Typography, Card, Button, ThemedModal, PremiumLoading } from '../../components/UI';
 import { Spacer } from '../../components/Form';
 import api from '../../api/api';
 import { 
@@ -28,6 +28,7 @@ export default function TakeTest({ route, navigation }) {
   const [answers, setAnswers] = useState({});
   const [timeLeft, setTimeLeft] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [notice, setNotice] = useState(null);
 
   useEffect(() => {
     fetchTest();
@@ -52,8 +53,10 @@ export default function TakeTest({ route, navigation }) {
         throw new Error("Invalid test data");
       }
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.detail || 'Failed to load test');
-      navigation.goBack();
+      setNotice({ 
+        title: 'Notice', 
+        message: e.response?.data?.detail || 'This content is currently unavailable.' 
+      });
     } finally {
       setLoading(false);
     }
@@ -91,11 +94,10 @@ export default function TakeTest({ route, navigation }) {
   };
 
   if (loading || !data) return (
-    <View style={[styles.container, styles.center]}>
-      <ActivityIndicator size="large" color={theme.colors.acc} />
-      <Spacer h={10} />
-      <Typography variant="small">Loading Test...</Typography>
-    </View>
+    <PremiumLoading 
+      message="Initializing Assessment..." 
+      subtext="Please wait while we prepare your questions"
+    />
   );
 
   const formatTime = (seconds) => {
@@ -200,6 +202,16 @@ export default function TakeTest({ route, navigation }) {
           </TouchableOpacity>
         </View>
       </View>
+
+      <ThemedModal 
+        visible={!!notice}
+        title={notice?.title}
+        message={notice?.message}
+        onConfirm={() => {
+          setNotice(null);
+          navigation.goBack();
+        }}
+      />
     </View>
   );
 }

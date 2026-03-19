@@ -7,7 +7,7 @@ import {
   TouchableOpacity 
 } from 'react-native';
 import { theme } from '../../theme/theme';
-import { Typography, Card } from '../../components/UI';
+import { Typography, Card, PremiumLoading } from '../../components/UI';
 import { Spacer } from '../../components/Form';
 import api from '../../api/api';
 import { 
@@ -20,6 +20,7 @@ import {
 
 export default function Notifications({ navigation }) {
   const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -33,6 +34,7 @@ export default function Notifications({ navigation }) {
     } catch (e) {
       console.error(e);
     } finally {
+      setLoading(false);
       setRefreshing(false);
     }
   };
@@ -88,14 +90,18 @@ export default function Notifications({ navigation }) {
             </Card>
           ))
         ) : (
-          <View style={styles.emptyState}>
-            <Bell size={48} color={theme.colors.card2} />
-            <Spacer h={16} />
-            <Typography variant="caption">All caught up! No new notifications.</Typography>
-          </View>
+          !loading && (
+            <View style={styles.emptyState}>
+              <Bell size={48} color={theme.colors.card2} />
+              <Spacer h={16} />
+              <Typography variant="caption">All caught up! No new notifications.</Typography>
+            </View>
+          )
         )}
         <Spacer h={40} />
       </ScrollView>
+
+      {loading && !notifications.length && <PremiumLoading message="Syncing notifications..." />}
     </View>
   );
 }

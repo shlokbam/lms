@@ -60,50 +60,36 @@ export default function TraineeDashboard() {
 
       <div style={{ display:'grid', gridTemplateColumns:'1fr 300px', gap:22, alignItems:'start' }}>
         <div>
-          <div className="sh-info">
-            <h1 className="sh-title">Learning Journey</h1>
-            <p className="sh-sub">All your enrolled modules</p>
+        <div className="sh anim-up" style={{ marginBottom: 20 }}>
+          <div>
+            <div className="sh-title">Learning Journey</div>
+            <div className="sh-sub">All your enrolled modules</div>
           </div>
-          <div className="sh-actions" style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-end' }}>
-            {/* Row 1: Search & Status */}
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <div style={{ position:'relative' }}>
-                <input 
-                  type="text" 
-                  className="input input-sm" 
-                  placeholder="Search modules..." 
-                  style={{ width:240, paddingLeft:32, background: 'var(--card2)', borderColor: 'var(--border)' }} 
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-                <span style={{ position:'absolute', left:10, top:6, opacity:0.5 }}>🔍</span>
-              </div>
-              <div style={{ width:1, height:20, background:'var(--border)', margin:'0 4px' }} />
-              <div className="flex gap-2">
-                {['all','live','upcoming','ended'].map(f => (
-                  <button key={f} className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setFilter(f)}>
-                    {f === 'all' ? 'All' : f === 'live' ? 'Live' : f.charAt(0).toUpperCase() + f.slice(1)}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {/* Row 2: Training Types */}
-            <div className="flex gap-2">
-              <button 
-                className={`btn btn-sm ${typeFilter === 'all' ? 'btn-primary' : 'btn-secondary'}`} 
-                onClick={() => setTypeFilter('all')}
-                style={{ fontWeight: 700 }}
-              >
-                All Types
+          <div className="sh-actions" style={{ display: 'flex', gap: 8, flexWrap:'wrap', alignItems:'center' }}>
+            <input 
+              type="text" 
+              className="form-input" 
+              placeholder="Search modules..." 
+              style={{ width:180, height:36, padding:'0 10px', fontSize:13 }} 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            
+            {['all','live','upcoming','ended'].map(f => (
+              <button key={f} className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setFilter(f)}>
+                {f === 'all' ? 'All' : f === 'live' ? 'Live' : f.charAt(0).toUpperCase() + f.slice(1)}
               </button>
-              <div style={{ width:1, height:20, background:'var(--border)', margin:'0 4px' }} />
-              {[{v:'self_paced',l:'Self-paced'},{v:'virtual',l:'Virtual'},{v:'classroom',l:'Classroom'}].map(f => (
-                <button key={f.v} className={`btn btn-sm ${typeFilter===f.v ? 'btn-primary':'btn-secondary'}`} onClick={()=>setTypeFilter(f.v)}>
-                  {f.l}
-                </button>
-              ))}
-            </div>
+            ))}
+
+            <div style={{ width:1, height:24, background:'var(--border)', margin:'0 4px' }} />
+
+            {[{v:'all',l:'All Types'},{v:'self_paced',l:'Self-paced'},{v:'virtual',l:'Virtual'},{v:'classroom',l:'Classroom'}].map(f => (
+              <button key={f.v} className={`btn btn-sm ${typeFilter===f.v ? 'btn-primary':'btn-secondary'}`} onClick={()=>setTypeFilter(f.v)}>
+                {f.l}
+              </button>
+            ))}
           </div>
+        </div>
 
           {showLive && ongoing.length > 0 && (
             <>

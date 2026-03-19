@@ -13,7 +13,7 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as SecureStore from 'expo-secure-store';
 import { theme } from '../../theme/theme';
-import { Typography, Button } from '../../components/UI';
+import { Typography, ThemedModal, PremiumLoading } from '../../components/UI';
 import { Spacer } from '../../components/Form';
 import { ChevronLeft, ExternalLink, Download, CheckCircle } from 'lucide-react-native';
 import api from '../../api/api';
@@ -23,6 +23,7 @@ const { width } = Dimensions.get('window');
 export default function DocumentViewer({ route, navigation }) {
   const { material, moduleId } = route.params;
   const [loading, setLoading] = useState(true);
+  const [notice, setNotice] = useState(null);
   const [downloading, setDownloading] = useState(false);
   const [token, setToken] = useState(null);
   const [completed, setCompleted] = useState(false);
@@ -42,7 +43,7 @@ export default function DocumentViewer({ route, navigation }) {
     }
   };
 
-  const fileUrl = token 
+  const fileUrl = token
     ? `http://192.168.29.250:8000/uploads/${material.file_path}?token=${token}`
     : null;
 
@@ -55,10 +56,10 @@ export default function DocumentViewer({ route, navigation }) {
         watch_percent: 100
       });
       setCompleted(true);
-      Alert.alert('Success', 'Material marked as completed!');
+      setNotice({ title: 'Success', message: 'Material marked as completed!' });
     } catch (e) {
       console.error(e.response?.data);
-      Alert.alert('Error', 'Failed to update progress');
+      setNotice({ title: 'Error', message: 'Failed to update progress' });
     }
   };
 
@@ -73,7 +74,7 @@ export default function DocumentViewer({ route, navigation }) {
         await Linking.openURL(fileUrl);
       }
     } catch (e) {
-      Alert.alert('Error', 'Failed to open document');
+      setNotice({ title: 'Error', message: 'Failed to open document' });
     }
   };
 
@@ -89,54 +90,67 @@ export default function DocumentViewer({ route, navigation }) {
       </View>
 
       <View style={styles.content}>
-        {material.file_type === 'video' ? (
-          <View style={styles.videoContainer}>
-            <Video
-              style={styles.video}
-              source={{ uri: fileUrl }}
-              useNativeControls
-              resizeMode={ResizeMode.CONTAIN}
-              isLooping={false}
-              onLoad={() => setLoading(false)}
-              onError={(e) => console.log('Video Error:', e)}
-            />
-            {loading && <ActivityIndicator style={styles.loader} size="large" color={theme.colors.acc} />}
-          </View>
-        ) : (
-          <View style={styles.pdfState}>
-            <ExternalLink size={64} color={theme.colors.acc} style={{ marginBottom: 20 }} />
-            <Typography variant="h2" style={{ textAlign: 'center' }}>{material.file_type.toUpperCase()} Document</Typography>
-            <Typography variant="caption" style={{ textAlign: 'center', maxWidth: '80%', marginBottom: 30 }}>
-              This document ({material.title}) will be opened in your system's default viewer.
-            </Typography>
-            
-            <Button 
-              title={loading || !token ? "Loading..." : "Open Document"} 
-              onPress={downloadAndShare}
-              disabled={loading || !token}
-              icon={Download}
-            />
-          </View>
-        )}
+        {loading && <PremiumLoading message="Preparing Material..." />}
 
-        <Spacer h={24} />
-        
-        {!completed ? (
-          <Button 
-            title="Mark as Completed" 
-            variant="outline"
-            onPress={handleMarkAsCompleted}
-            icon={CheckCircle}
-          />
-        ) : (
-          <View style={styles.completedBadge}>
-            <CheckCircle size={20} color={theme.colors.green} />
-            <Typography variant="body" style={{ color: theme.colors.green, fontWeight: '700' }}>
-              Completed
-            </Typography>
+        {!loading && (
+          <View style={styles.viewer}>
+            {material.file_type === 'video' ? (
+              <View style={styles.videoContainer}>
+                <Video
+                  style={styles.video}
+                  source={{ uri: fileUrl }}
+                  useNativeControls
+                  resizeMode={ResizeMode.CONTAIN}
+                  isLooping={false}
+                  onLoad={() => setLoading(false)}
+                  onError={(e) => console.log('Video Error:', e)}
+                />
+              </View>
+            ) : (
+              <View style={styles.pdfState}>
+                <ExternalLink size={64} color={theme.colors.acc} style={{ marginBottom: 20 }} />
+                <Typography variant="h2" style={{ textAlign: 'center' }}>{material.file_type.toUpperCase()} Document</Typography>
+                <Typography variant="caption" style={{ textAlign: 'center', maxWidth: '80%', marginBottom: 30 }}>
+                  This document ({material.title}) will be opened in your system's default viewer.
+                </Typography>
+
+                <Button
+                  title={loading || !token ? "Loading..." : "Open Document"}
+                  onPress={downloadAndShare}
+                  disabled={loading || !token}
+                />
+              </View>
+            )}
+
+            <Spacer h={24} />
+
+            {!completed ? (
+              <Button
+                title="Mark as Completed"
+                variant="outline"
+                onPress={handleMarkAsCompleted}
+              />
+            ) : (
+              <View style={styles.completedBadge}>
+                <CheckCircle size={20} color={theme.colors.green} />
+                <Typography variant="body" style={{ color: theme.colors.green, fontWeight: '700' }}>
+                  Completed
+                </Typography>
+              </View>
+            )}
           </View>
         )}
       </View>
+
+      <ThemedModal
+        visible={!!notice}
+        title={notice?.title}
+        message={notice?.message}
+        onConfirm={() => {
+          setNotice(null);
+          if (notice?.title === 'Error') navigation.goBack();
+        }}
+      />
     </View>
   );
 }
@@ -168,6 +182,9 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 20,
+  },
+  viewer: {
+    flex: 1,
     justifyContent: 'center',
   },
   videoContainer: {

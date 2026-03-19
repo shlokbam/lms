@@ -6,12 +6,11 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  Linking,
-  Alert
+  Linking
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../theme/theme';
-import { Typography, Card, Button } from '../../components/UI';
+import { Typography, Card, ThemedModal, PremiumLoading } from '../../components/UI';
 import { Spacer } from '../../components/Form';
 import api from '../../api/api';
 import { 
@@ -34,6 +33,7 @@ export default function ModuleDetail({ route, navigation }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedChapters, setExpandedChapters] = useState({});
+  const [notice, setNotice] = useState(null);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -60,11 +60,7 @@ export default function ModuleDetail({ route, navigation }) {
     setExpandedChapters(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  if (loading) return (
-    <View style={[styles.container, styles.center]}>
-      <ActivityIndicator size="large" color={theme.colors.acc} />
-    </View>
-  );
+  if (loading || !data) return <PremiumLoading message="Loading Module Details..." />;
 
   const MaterialRow = ({ mat }) => {
     const isDone = data.progress_map[mat.id]?.completed;
@@ -179,17 +175,21 @@ export default function ModuleDetail({ route, navigation }) {
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Premium Header */}
-        <View style={[styles.premiumHeader, { backgroundColor: data.module.color || theme.colors.acc }]}>
+        {/* Professional Header */}
+        <View style={styles.premiumHeader}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <ChevronLeft size={24} color="#fff" />
+            <ChevronLeft size={24} color={theme.colors.t1} />
           </TouchableOpacity>
           
           <View style={styles.headerContent}>
             <View style={styles.headerTopRow}>
-              <Typography variant="small" style={styles.headerCat}>{data.module.category?.toUpperCase() || 'GENERAL'}</Typography>
+              <View style={[styles.headerCatBadge, { backgroundColor: (data.module.color || theme.colors.acc) + '20' }]}>
+                <Typography variant="small" style={[styles.headerCat, { color: data.module.color || theme.colors.acc }]}>
+                  {data.module.category?.toUpperCase() || 'GENERAL'}
+                </Typography>
+              </View>
               <View style={styles.headerPhaseBadge}>
-                <Typography variant="caption" style={{ color: '#fff', fontWeight: '800' }}>{data.module.status.toUpperCase()}</Typography>
+                <Typography variant="caption" style={{ color: theme.colors.t2, fontWeight: '800' }}>{data.module.status.toUpperCase()}</Typography>
               </View>
             </View>
 
@@ -198,21 +198,21 @@ export default function ModuleDetail({ route, navigation }) {
 
             <View style={styles.progressSection}>
               <View style={styles.progTextRow}>
-                <Typography variant="small" style={{ color: '#fff', opacity: 0.8 }}>
+                <Typography variant="small" style={{ color: theme.colors.t3 }}>
                   Overall Progress: {data.overall_pct}%
                 </Typography>
-                <Typography variant="small" style={{ color: '#fff', opacity: 0.8 }}>
+                <Typography variant="small" style={{ color: theme.colors.t3 }}>
                   {data.done_mats}/{data.total_mats} completed
                 </Typography>
               </View>
               <View style={styles.progBarBg}>
-                <View style={[styles.progBarFill, { width: `${data.overall_pct}%` }]} />
+                <View style={[styles.progBarFill, { width: `${data.overall_pct}%`, backgroundColor: data.module.color || theme.colors.acc }]} />
               </View>
             </View>
 
             <View style={styles.headerMetaRow}>
               <View style={styles.metaItem}>
-                <Layers size={14} color="#fff" style={{ opacity: 0.7 }} />
+                <Layers size={14} color={theme.colors.t3} />
                 <Typography variant="caption" style={styles.metaText}>
                   {data.module.training_type.replace('_',' ')}
                 </Typography>
@@ -223,12 +223,12 @@ export default function ModuleDetail({ route, navigation }) {
                   onPress={() => {
                     const url = data.module.meet_link;
                     if (url) {
-                      Linking.openURL(url).catch(() => Alert.alert("Error", "Cannot open meet link"));
+                      Linking.openURL(url).catch(() => setNotice({ title: 'Error', message: 'Cannot open meet link' }));
                     }
                   }}
                 >
-                  {data.module.training_type === 'virtual' ? <Video size={14} color="#fff" /> : <MapPin size={14} color="#fff" />}
-                  <Typography variant="caption" style={styles.metaText}>
+                  {data.module.training_type === 'virtual' ? <Video size={14} color={theme.colors.acc} /> : <MapPin size={14} color={theme.colors.acc} />}
+                  <Typography variant="caption" style={[styles.metaText, { color: theme.colors.acc }]}>
                     {data.module.training_type === 'virtual' ? 'Join Meet' : 'Meet Link'}
                   </Typography>
                 </TouchableOpacity>
@@ -237,19 +237,19 @@ export default function ModuleDetail({ route, navigation }) {
             
             <View style={styles.moduleWindowRow}>
               <View style={styles.windowBox}>
-                <Clock size={12} color="#fff" style={{ opacity: 0.7 }} />
+                <Clock size={12} color={theme.colors.t4} />
                 <View>
                   <Typography variant="small" style={styles.headerLabel}>STARTS</Typography>
-                  <Typography variant="caption" style={styles.whiteText}>
+                  <Typography variant="caption" style={styles.dateText}>
                     {new Date(data.module.start_datetime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                   </Typography>
                 </View>
               </View>
               <View style={styles.windowBox}>
-                <Clock size={12} color="#fff" style={{ opacity: 0.7 }} />
+                <Clock size={12} color={theme.colors.t4} />
                 <View>
                   <Typography variant="small" style={styles.headerLabel}>ENDS</Typography>
-                  <Typography variant="caption" style={styles.whiteText}>
+                  <Typography variant="caption" style={styles.dateText}>
                     {data.module.end_datetime ? new Date(data.module.end_datetime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'No Deadline'}
                   </Typography>
                 </View>
@@ -300,6 +300,13 @@ export default function ModuleDetail({ route, navigation }) {
           <Spacer h={40} />
         </View>
       </ScrollView>
+
+      <ThemedModal 
+        visible={!!notice}
+        title={notice?.title}
+        message={notice?.message}
+        onConfirm={() => setNotice(null)}
+      />
     </View>
   );
 }
@@ -316,8 +323,11 @@ const styles = StyleSheet.create({
   premiumHeader: {
     paddingTop: 60,
     paddingBottom: 40,
+    backgroundColor: theme.colors.card,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
+    borderBottomWidth:1,
+    borderBottomColor: theme.colors.border + '30',
   },
   backBtn: {
     padding: 12,
@@ -333,27 +343,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
+  headerCatBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
   headerCat: {
-    color: '#fff',
-    opacity: 0.8,
+    fontSize: 10,
     fontWeight: '800',
-    letterSpacing: 1,
+    letterSpacing: 1.5,
   },
   headerPhaseBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: theme.colors.card2,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border + '50',
   },
   headerTitle: {
-    color: '#fff',
+    color: theme.colors.t1,
     fontSize: 28,
     lineHeight: 34,
     marginBottom: 12,
   },
   headerDesc: {
-    color: '#fff',
-    opacity: 0.9,
+    color: theme.colors.t2,
     fontSize: 14,
     lineHeight: 20,
     marginBottom: 24,
@@ -368,12 +383,11 @@ const styles = StyleSheet.create({
   },
   progBarBg: {
     height: 8,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: theme.colors.card2,
     borderRadius: 4,
   },
   progBarFill: {
     height: '100%',
-    backgroundColor: '#fff',
     borderRadius: 4,
   },
   headerMetaRow: {
@@ -386,13 +400,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: theme.colors.card2,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 10,
+    borderWidth: 1,
+    borderColor: theme.colors.border + '30',
   },
   metaText: {
-    color: '#fff',
+    color: theme.colors.t2,
     fontWeight: '600',
     textTransform: 'capitalize',
   },
@@ -478,13 +494,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerLabel: {
-    color: 'rgba(255,255,255,0.5)',
+    color: theme.colors.t4,
     fontWeight: '800',
     fontSize: 9,
     letterSpacing: 1,
   },
-  whiteText: {
-    color: '#fff',
+  dateText: {
+    color: theme.colors.t2,
     fontWeight: '600',
   },
   attemptInfo: {
