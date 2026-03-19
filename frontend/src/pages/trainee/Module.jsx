@@ -175,12 +175,11 @@ export default function TraineeModule() {
             <div className="card card-p" style={{ textAlign:'center', color:'var(--t3)', fontSize:13, padding:24 }}>No tests for this module yet</div>
           ) : (
             tests.map(t => {
-              const att = attempts_map[t.id]
               const now = new Date()
-              const testPhaseMap = { pre:'pre', mid:'live', post:'post' }
-              const matchPhase = testPhaseMap[t.test_type] === phase
+              const attData = attempts_map[t.id] || { latest: null, count: 0 }
+              const att = attData.latest
               const inWindow = (!t.start_datetime || now >= new Date(t.start_datetime)) && (!t.end_datetime || now <= new Date(t.end_datetime))
-              const canTake = matchPhase && inWindow && !att
+              const canTake = inWindow && attData.count < t.max_attempts
               return (
                 <div key={t.id} className="card card-p mb-3">
                   <div style={{ fontWeight:700, fontSize:14, marginBottom:4 }}>{t.title}</div>
@@ -195,7 +194,7 @@ export default function TraineeModule() {
                     <button className="btn btn-gold btn-sm" style={{ marginTop:8 }} onClick={()=>startTest(t.id)}>Take Test →</button>
                   ) : (
                     <div className="t-xs t-muted" style={{ marginTop:6 }}>
-                      {!matchPhase ? `Available during ${testPhaseMap[t.test_type]} phase` : 'Test window closed'}
+                      {!inWindow ? 'Test window closed' : `Available during ${t.test_type} phase`}
                       {(t.start_datetime || t.end_datetime) && (
                         <div style={{ marginTop:4, opacity:0.8 }}>
                           {fmtDate(t.start_datetime)} → {fmtDate(t.end_datetime)}

@@ -91,9 +91,12 @@ def trainee_module(module_id: int, db: Session = Depends(get_db), current_user: 
 
     attempts_map = {}
     for t in tests:
-        att = db.query(models.TestAttempt).filter_by(test_id=t.id, trainee_id=current_user.id)\
-                .order_by(models.TestAttempt.started_at.desc()).first()
-        attempts_map[t.id] = schemas.TestAttemptOut.from_orm(att).dict() if att else None
+        atts = db.query(models.TestAttempt).filter_by(test_id=t.id, trainee_id=current_user.id)\
+                 .order_by(models.TestAttempt.started_at.desc()).all()
+        attempts_map[t.id] = {
+            "latest": schemas.TestAttemptOut.from_orm(atts[0]).dict() if atts else None,
+            "count": len(atts)
+        }
 
     total_mats = len(materials)
     done_mats = sum(1 for m in materials if progress_map.get(m.id, {}).get("completed"))
