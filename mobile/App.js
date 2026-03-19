@@ -1,13 +1,18 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { theme } from './src/theme/theme';
+import { Home, BookOpen, Calendar as CalIcon, User } from 'lucide-react-native';
 
 // Screens
 import Login from './src/screens/auth/Login';
 import Register from './src/screens/auth/Register';
 import TraineeDashboard from './src/screens/trainee/Dashboard';
+import Courses from './src/screens/trainee/Courses';
+import Quizzes from './src/screens/trainee/Quizzes';
 import ModuleDetail from './src/screens/trainee/ModuleDetail';
 import TakeTest from './src/screens/trainee/TakeTest';
 import Profile from './src/screens/trainee/Profile';
@@ -17,11 +22,44 @@ import TestResult from './src/screens/trainee/TestResult';
 import DocumentViewer from './src/screens/trainee/DocumentViewer';
 
 const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
+
+function TabNavigator() {
+  const insets = useSafeAreaInsets();
+  
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: theme.colors.card,
+          borderTopColor: theme.colors.border,
+          height: 70 + (insets.bottom > 0 ? insets.bottom - 10 : 15),
+          paddingTop: 10,
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 15,
+        },
+        tabBarActiveTintColor: theme.colors.acc,
+        tabBarInactiveTintColor: theme.colors.t3,
+        tabBarIcon: ({ color, size }) => {
+          if (route.name === 'Home') return <Home size={size} color={color} />;
+          if (route.name === 'Courses') return <BookOpen size={size} color={color} />;
+          if (route.name === 'Calendar') return <CalIcon size={size} color={color} />;
+          if (route.name === 'Profile') return <User size={size} color={color} />;
+        },
+      })}
+    >
+      <Tab.Screen name="Home" component={TraineeDashboard} options={{ title: 'Home' }} />
+      <Tab.Screen name="Courses" component={Courses} options={{ title: 'My Courses' }} />
+      <Tab.Screen name="Calendar" component={Calendar} options={{ title: 'Calendar' }} />
+      <Tab.Screen name="Profile" component={Profile} options={{ title: 'Profile' }} />
+    </Tab.Navigator>
+  );
+}
 
 function Navigation() {
   const { user, loading } = useAuth();
 
-  if (loading) return null; // Or a splash screen
+  if (loading) return null;
 
   return (
     <Stack.Navigator screenOptions={{ 
@@ -30,10 +68,9 @@ function Navigation() {
     }}>
       {user ? (
         <>
-          <Stack.Screen name="Dashboard" component={TraineeDashboard} />
+          <Stack.Screen name="Main" component={TabNavigator} />
           <Stack.Screen name="ModuleDetail" component={ModuleDetail} />
           <Stack.Screen name="TakeTest" component={TakeTest} />
-          <Stack.Screen name="Profile" component={Profile} />
           <Stack.Screen name="Notifications" component={Notifications} />
           <Stack.Screen name="Calendar" component={Calendar} />
           <Stack.Screen name="TestResult" component={TestResult} />
@@ -50,9 +87,21 @@ function Navigation() {
 }
 
 export default function App() {
+  const navTheme = {
+    ...DarkTheme,
+    colors: {
+      ...DarkTheme.colors,
+      background: theme.colors.bg,
+      card: theme.colors.card,
+      text: theme.colors.t1,
+      border: theme.colors.border,
+      primary: theme.colors.acc,
+    },
+  };
+
   return (
     <AuthProvider>
-      <NavigationContainer>
+      <NavigationContainer theme={navTheme}>
         <Navigation />
       </NavigationContainer>
     </AuthProvider>

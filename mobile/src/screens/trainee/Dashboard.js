@@ -5,7 +5,9 @@ import {
   ScrollView, 
   RefreshControl, 
   TouchableOpacity,
-  Dimensions
+  Dimensions,
+  TextInput,
+  FlatList
 } from 'react-native';
 import { theme } from '../../theme/theme';
 import { Typography, Card } from '../../components/UI';
@@ -13,14 +15,21 @@ import { Spacer } from '../../components/Form';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/api';
 import { 
-  BookOpen, 
-  CheckCircle, 
-  Clock, 
-  Bell,
-  Calendar as CalIcon,
   LogOut,
   ChevronRight,
-  User as UserIcon
+  User as UserIcon,
+  Search,
+  Filter,
+  Layers,
+  Video,
+  Users,
+  Eye,
+  ArrowRight,
+  BookOpen,
+  CheckCircle,
+  Bell,
+  Calendar as CalIcon,
+  Clock
 } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
@@ -29,6 +38,9 @@ export default function TraineeDashboard({ navigation }) {
   const { user, logout } = useAuth();
   const [data, setData] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
     fetchDashboard();
@@ -55,94 +67,190 @@ export default function TraineeDashboard({ navigation }) {
       <View style={[styles.statIcon, { backgroundColor: color + '20' }]}>
         <Icon size={20} color={color} />
       </View>
-      <Typography variant="h2" style={{ marginBottom: 0 }}>{value}</Typography>
-      <Typography variant="small">{label}</Typography>
+      <View>
+        <Typography variant="h2" style={{ marginBottom: 0 }}>{value}</Typography>
+        <Typography variant="small" style={{ color: theme.colors.t3 }}>{label}</Typography>
+      </View>
       <View style={[styles.statBar, { backgroundColor: color }]} />
     </Card>
   );
 
-  const ModuleCard = ({ module }) => (
-    <TouchableOpacity 
-      activeOpacity={0.8} 
-      onPress={() => navigation.navigate('ModuleDetail', { moduleId: module.id })}
-    >
-      <Card style={styles.moduleCard} padding={false}>
-        <View style={styles.mcBody}>
-          <Typography variant="small" style={styles.mcCat}>{module.category}</Typography>
-          <Typography variant="h3">{module.title}</Typography>
-          <Typography variant="caption" numberOfLines={2}>{module.description}</Typography>
-        </View>
-        <View style={styles.mcFoot}>
-          <View style={styles.mcMeta}>
-            <Clock size={12} color={theme.colors.t3} />
-            <Typography variant="small">{module.phase.toUpperCase()}</Typography>
+  const ModuleCard = ({ module }) => {
+    const isLive = module.phase === 'live';
+    const isUpcoming = module.phase === 'pre';
+    
+    return (
+      <TouchableOpacity 
+        activeOpacity={0.9} 
+        onPress={() => navigation.navigate('ModuleDetail', { moduleId: module.id })}
+        style={styles.cardContainer}
+      >
+        <Card style={styles.premiumCard} padding={false}>
+          <View style={styles.pcHeader}>
+            <Typography variant="small" style={styles.pcCat}>{module.category || 'GENERAL'}</Typography>
+            <Typography variant="h3" numberOfLines={2} style={styles.pcTitle}>{module.title}</Typography>
+            
+            <View style={styles.tagRow}>
+              <View style={[styles.tag, { backgroundColor: theme.colors.acc + '20' }]}>
+                {module.training_type === 'virtual' ? <Video size={12} color={theme.colors.acc} /> : 
+                 module.training_type === 'classroom' ? <Users size={12} color={theme.colors.acc} /> : 
+                 <Layers size={12} color={theme.colors.acc} />}
+                <Typography variant="caption" style={{ color: theme.colors.acc, marginLeft: 4, fontWeight: '600' }}>
+                  {module.training_type === 'virtual' ? 'Virtual' : 
+                   module.training_type === 'classroom' ? 'Classroom' : 'Self-paced'}
+                </Typography>
+              </View>
+            </View>
+
+            <View style={styles.pcDateRow}>
+              <Clock size={12} color={theme.colors.t3} />
+              <Typography variant="caption" style={{ marginLeft: 6, color: theme.colors.t3 }}>
+                {isUpcoming ? `Starts ${new Date(module.start_datetime).toLocaleDateString()} ${new Date(module.start_datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 
+                 isLive ? `Until ${new Date(module.end_datetime).toLocaleDateString()}` : 'Ended'}
+              </Typography>
+            </View>
           </View>
-          <ChevronRight size={16} color={theme.colors.acc} />
-        </View>
-      </Card>
-    </TouchableOpacity>
-  );
+
+          <View style={styles.pcFooter}>
+            <View style={[styles.statusBadge, { 
+              backgroundColor: isLive ? theme.colors.green + '20' : 
+                               isUpcoming ? theme.colors.acc + '20' : theme.colors.card2 
+            }]}>
+              <View style={[styles.statusDot, { 
+                backgroundColor: isLive ? theme.colors.green : 
+                                 isUpcoming ? theme.colors.acc : theme.colors.t3 
+              }]} />
+              <Typography variant="caption" style={{ 
+                color: isLive ? theme.colors.green : 
+                       isUpcoming ? theme.colors.acc : theme.colors.t3, 
+                fontWeight: '700' 
+              }}>
+                {module.phase.toUpperCase()}
+              </Typography>
+            </View>
+            
+            <TouchableOpacity 
+              style={styles.previewBtn}
+              onPress={() => navigation.navigate('ModuleDetail', { moduleId: module.id })}
+            >
+              <Typography variant="small" style={{ color: theme.colors.t1, fontWeight: '600' }}>Preview</Typography>
+            </TouchableOpacity>
+          </View>
+        </Card>
+      </TouchableOpacity>
+    );
+  };
+
+  const filterData = (modules) => {
+    if (!modules) return [];
+    return modules.filter(m => {
+      const matchesSearch = m.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          m.category?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesType = typeFilter === 'all' || m.training_type === typeFilter;
+      return matchesSearch && matchesType;
+    });
+  };
 
   return (
-    <ScrollView 
-      style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.acc} />}
-    >
+    <View style={styles.container}>
       <View style={styles.header}>
         <View>
-          <Typography variant="caption">Welcome Back,</Typography>
+          <Typography variant="caption" style={{ color: theme.colors.t3 }}>Welcome Back,</Typography>
           <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
             <Typography variant="h2">{user?.name}</Typography>
           </TouchableOpacity>
         </View>
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          <TouchableOpacity onPress={() => navigation.navigate('Calendar')} style={styles.logoutBtn}>
-            <CalIcon size={20} color={theme.colors.amber} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('Notifications')} style={styles.logoutBtn}>
+          <TouchableOpacity onPress={() => navigation.navigate('Notifications')} style={styles.iconBtn}>
             <Bell size={20} color={theme.colors.acc} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
-            <LogOut size={20} color={theme.colors.red} />
           </TouchableOpacity>
         </View>
       </View>
 
-      <View style={styles.statRow}>
-        <StatTile 
-          label="Total Tests" 
-          value={data?.total_tests || 0} 
-          icon={BookOpen} 
-          color={theme.colors.acc} 
-        />
-        <StatTile 
-          label="Tests Passed" 
-          value={data?.passed_tests || 0} 
-          icon={CheckCircle} 
-          color={theme.colors.green} 
-        />
-      </View>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.acc} />}
+      >
+        <View style={styles.searchContainer}>
+          <Search size={18} color={theme.colors.t3} style={styles.searchIcon} />
+          <TextInput 
+            style={styles.searchInput}
+            placeholder="Search modules..."
+            placeholderTextColor={theme.colors.t4}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
 
-      <Spacer h={24} />
-      
-      <Typography variant="h3" style={styles.sectionTitle}>Ongoing Modules</Typography>
-      {data?.ongoing?.length > 0 ? (
-        data.ongoing.map(m => <ModuleCard key={m.id} module={m} />)
-      ) : (
-        <Typography variant="caption">No active modules at the moment.</Typography>
-      )}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
+          {['all', 'self_paced', 'virtual', 'classroom'].map(t => (
+            <TouchableOpacity 
+              key={t}
+              onPress={() => setTypeFilter(t)}
+              style={[styles.filterChip, typeFilter === t && styles.filterChipActive]}
+            >
+              <Typography variant="small" style={{ color: typeFilter === t ? '#fff' : theme.colors.t3, fontWeight: '600' }}>
+                {t === 'all' ? 'All Types' : t.charAt(0).toUpperCase() + t.slice(1).replace('_', ' ')}
+              </Typography>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
-      <Spacer h={24} />
+        <View style={styles.statRow}>
+          <StatTile 
+            label="Total Tests" 
+            value={data?.total_tests || 0} 
+            icon={BookOpen} 
+            color={theme.colors.acc} 
+          />
+          <StatTile 
+            label="Tests Passed" 
+            value={data?.passed_tests || 0} 
+            icon={CheckCircle} 
+            color={theme.colors.green} 
+          />
+        </View>
 
-      <Typography variant="h3" style={styles.sectionTitle}>Upcoming</Typography>
-      {data?.upcoming?.length > 0 ? (
-        data.upcoming.map(m => <ModuleCard key={m.id} module={m} />)
-      ) : (
-        <Typography variant="caption">No upcoming modules scheduled.</Typography>
-      )}
+        <Spacer h={32} />
+        
+        {/* Sections with Horizontal Scroll */}
+        {['ongoing', 'upcoming', 'completed'].map(phaseKey => {
+          if (statusFilter !== 'all' && statusFilter !== phaseKey) return null;
+          
+          const filtered = filterData(data?.[phaseKey]);
+          if (filtered.length === 0 && !searchQuery) return null;
+          
+          return (
+            <View key={phaseKey} style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Typography variant="h3" style={{ marginBottom: 0 }}>
+                  {phaseKey === 'ongoing' ? 'Live Modules' : 
+                   phaseKey === 'upcoming' ? 'Upcoming' : 'Past Modules'}
+                </Typography>
+                <TouchableOpacity onPress={() => setStatusFilter(phaseKey)}>
+                  <ArrowRight size={18} color={theme.colors.acc} />
+                </TouchableOpacity>
+              </View>
+              
+              <FlatList 
+                horizontal
+                data={filtered}
+                renderItem={({ item }) => <ModuleCard module={item} />}
+                keyExtractor={item => item.id.toString()}
+                showsHorizontalScrollIndicator={false}
+                ListEmptyComponent={
+                  <Typography variant="caption" style={{ padding: 20 }}>No modules found.</Typography>
+                }
+                contentContainerStyle={{ paddingRight: 20 }}
+              />
+              <Spacer h={24} />
+            </View>
+          );
+        })}
 
-      <Spacer h={40} />
-    </ScrollView>
+        <Spacer h={60} />
+      </ScrollView>
+    </View>
   );
 }
 
@@ -150,77 +258,180 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.bg,
-    padding: 24,
   },
   header: {
-    paddingTop: 40,
+    paddingTop: 60,
+    paddingBottom: 20,
+    paddingHorizontal: 24,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
   },
-  logoutBtn: {
+  iconBtn: {
     width: 44,
     height: 44,
-    backgroundColor: theme.colors.card2,
     borderRadius: 12,
+    backgroundColor: theme.colors.card,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.card,
+    marginHorizontal: 20,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    marginBottom: 16,
+    height: 52,
+  },
+  searchIcon: {
+    marginRight: 12,
+  },
+  searchInput: {
+    flex: 1,
+    color: theme.colors.t1,
+    fontSize: 15,
+  },
+  filterRow: {
+    marginHorizontal: 0,
+    marginBottom: 24,
+    paddingLeft: 20,
+  },
+  filterChip: {
+    paddingHorizontal: 16,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: theme.colors.card2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  filterChipActive: {
+    backgroundColor: theme.colors.acc,
+    borderColor: theme.colors.acc,
+  },
   statRow: {
     flexDirection: 'row',
     gap: 16,
+    paddingHorizontal: 24,
   },
   statTile: {
     flex: 1,
-    padding: 20,
+    padding: 16,
+    paddingTop: 40,
     position: 'relative',
     overflow: 'hidden',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
   },
   statIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
   },
   statBar: {
     position: 'absolute',
-    bottom: 0,
+    top: 0,
     left: 0,
-    right: 0,
-    height: 3,
+    width: 3,
+    bottom: 0,
   },
-  sectionTitle: {
-    marginBottom: 12,
+  section: {
+    marginBottom: 8,
   },
-  moduleCard: {
-    marginBottom: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: theme.colors.acc,
-  },
-  mcBody: {
-    padding: 16,
-  },
-  mcCat: {
-    color: theme.colors.acc,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  mcFoot: {
+  sectionHeader: {
+    paddingHorizontal: 24,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: theme.colors.card2,
-    padding: 12,
-    paddingHorizontal: 16,
+    marginBottom: 16,
   },
-  mcMeta: {
+  cardContainer: {
+    marginLeft: 20,
+    width: width * 0.75,
+  },
+  premiumCard: {
+    backgroundColor: theme.colors.card,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: theme.colors.border + '50',
+    overflow: 'hidden',
+  },
+  pcHeader: {
+    padding: 20,
+    paddingBottom: 16,
+  },
+  pcCat: {
+    color: theme.colors.acc,
+    fontSize: 10,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  pcTitle: {
+    fontSize: 18,
+    lineHeight: 24,
+    marginBottom: 12,
+    color: theme.colors.t1,
+  },
+  tagRow: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  tag: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+  },
+  pcDateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  pcFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border + '30',
+    backgroundColor: theme.colors.card + '50',
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
     gap: 6,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  previewBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: theme.colors.card2,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   }
 });

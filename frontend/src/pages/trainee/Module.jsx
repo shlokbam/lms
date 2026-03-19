@@ -87,7 +87,7 @@ export default function TraineeModule() {
               </span>
               {module.meet_link && canAccess('live', phase) && (
                 <a href={module.meet_link.startsWith('http') ? module.meet_link : `https://${module.meet_link}`} target="_blank" rel="noopener noreferrer" className="btn btn-xs btn-ghost" style={{ fontSize:11, display:'flex', alignItems:'center', gap:4 }}>
-                  <span style={{ fontSize:14 }}></span> {module.training_type === 'classroom' ? 'Location details' : 'Join Meeting'}
+                  <span style={{ fontSize:14 }}></span> {module.training_type === 'classroom' ? 'Meet Link' : 'Join Meeting'}
                 </a>
               )}
             </div>

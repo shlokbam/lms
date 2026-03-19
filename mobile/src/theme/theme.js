@@ -70,5 +70,10 @@ export const theme = {
       shadowRadius: 24,
       elevation: 8,
     },
+  },
+  fonts: {
+    regular: 'System',
+    medium: 'System',
+    bold: 'System',
   }
 };

@@ -4,8 +4,12 @@ import {
   StyleSheet, 
   ScrollView, 
   TouchableOpacity,
-  ActivityIndicator
+  ActivityIndicator,
+  RefreshControl,
+  Linking,
+  Alert
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../theme/theme';
 import { Typography, Card, Button } from '../../components/UI';
 import { Spacer } from '../../components/Form';
@@ -17,7 +21,12 @@ import {
   HelpCircle,
   CheckCircle2,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  MapPin,
+  Video,
+  Layers,
+  Clock,
+  Info
 } from 'lucide-react-native';
 
 export default function ModuleDetail({ route, navigation }) {
@@ -26,9 +35,11 @@ export default function ModuleDetail({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [expandedChapters, setExpandedChapters] = useState({});
 
-  useEffect(() => {
-    fetchModule();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchModule();
+    }, [])
+  );
 
   const fetchModule = async () => {
     try {
@@ -85,6 +96,7 @@ export default function ModuleDetail({ route, navigation }) {
     // Check window
     const now = new Date(data.now_iso);
     const start = test.start_datetime ? new Date(test.start_datetime) : null;
+    const end = test.end_datetime ? new Date(test.end_datetime) : null;
     let statusText = "";
     let statusColor = theme.colors.t3;
     let isLocked = false;
@@ -92,10 +104,10 @@ export default function ModuleDetail({ route, navigation }) {
     if (attempt) {
       statusText = isPassed ? "Passed" : "Attempted";
       statusColor = isPassed ? theme.colors.green : theme.colors.red;
-      isLocked = attData.count >= test.max_attempts; // Lock only if all attempts used
+      isLocked = attData.count >= test.max_attempts; 
     } else if (start && now < start) {
-      statusText = `Opens: ${new Date(start).toLocaleDateString()} ${new Date(start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-      statusColor = theme.colors.t3;
+      statusText = "Scheduled";
+      statusColor = theme.colors.amber;
       isLocked = true;
     } else if (end && now > end) {
       statusText = "Closed";
@@ -106,10 +118,7 @@ export default function ModuleDetail({ route, navigation }) {
       statusColor = theme.colors.green;
     }
 
-    if (attData.count > 0 && attData.count < test.max_attempts) {
-      statusText = `Attempts: ${attData.count}/${test.max_attempts} (Retry available)`;
-      isLocked = false;
-    }
+    const fmtTime = (d) => d ? new Date(d).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '—';
 
     return (
       <TouchableOpacity 
@@ -122,19 +131,45 @@ export default function ModuleDetail({ route, navigation }) {
           <Typography variant="h3" style={{ flex: 1, marginBottom: 0, marginLeft: 10, color: isLocked ? theme.colors.t3 : theme.colors.t1 }}>{test.title}</Typography>
           {isPassed && <CheckCircle2 size={20} color={theme.colors.green} />}
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 30, gap: 8 }}>
-          <Typography variant="caption">
-            {test.test_type.toUpperCase()} TEST • {test.duration_minutes} MINS
-          </Typography>
-          <Typography variant="caption" style={{ color: statusColor, fontWeight: '700' }}>
-            • {statusText}
-          </Typography>
+        <View style={{ marginLeft: 30, marginTop: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Clock size={12} color={theme.colors.t3} />
+              <Typography variant="caption">{test.duration_minutes}m</Typography>
+            </View>
+            <Typography variant="caption" style={{ color: statusColor, fontWeight: '700' }}>
+              ● {statusText}
+            </Typography>
+            {test.max_attempts > 1 && (
+              <Typography variant="caption" style={{ color: theme.colors.t3 }}>
+                Attempts: {attData.count}/{test.max_attempts}
+              </Typography>
+            )}
+          </View>
+          
+          <View style={styles.testWindowRow}>
+            <View style={{ flex: 1 }}>
+              <Typography variant="small" style={styles.windowLabel}>START</Typography>
+              <Typography variant="caption">{fmtTime(test.start_datetime)}</Typography>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Typography variant="small" style={styles.windowLabel}>END</Typography>
+              <Typography variant="caption">{fmtTime(test.end_datetime)}</Typography>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Typography variant="small" style={styles.windowLabel}>PASS SCORE</Typography>
+              <Typography variant="caption">{test.passing_marks}%</Typography>
+            </View>
+          </View>
         </View>
+
         {attempt && (
           <View style={styles.attemptInfo}>
-            <Typography variant="small" style={{ color: isPassed ? theme.colors.green : theme.colors.red }}>
-              Result: {attempt.score}/{attempt.total_marks} ({attempt.percentage}%) • {isPassed ? 'PASSED' : 'FAILED'}
-            </Typography>
+            <View style={styles.resultBadge}>
+              <Typography variant="small" style={{ color: isPassed ? theme.colors.green : theme.colors.red, fontWeight: '700' }}>
+                LATEST SCORE: {Math.round(attempt.percentage)}% ({attempt.score}/{attempt.total_marks})
+              </Typography>
+            </View>
           </View>
         )}
       </TouchableOpacity>
@@ -143,56 +178,127 @@ export default function ModuleDetail({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <ChevronLeft size={24} color={theme.colors.t1} />
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Typography variant="h3" numberOfLines={1}>{data.module.title}</Typography>
-          <Typography variant="small">{data.overall_pct}% Completed</Typography>
-        </View>
-      </View>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Premium Header */}
+        <View style={[styles.premiumHeader, { backgroundColor: data.module.color || theme.colors.acc }]}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <ChevronLeft size={24} color="#fff" />
+          </TouchableOpacity>
+          
+          <View style={styles.headerContent}>
+            <View style={styles.headerTopRow}>
+              <Typography variant="small" style={styles.headerCat}>{data.module.category?.toUpperCase() || 'GENERAL'}</Typography>
+              <View style={styles.headerPhaseBadge}>
+                <Typography variant="caption" style={{ color: '#fff', fontWeight: '800' }}>{data.module.status.toUpperCase()}</Typography>
+              </View>
+            </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Typography variant="h3" style={styles.secTitle}>Course Content</Typography>
-        
-        {data.chapters.map(ch => (
-          <View key={ch.id} style={styles.chapterBox}>
-            <TouchableOpacity 
-              style={styles.chapterHead} 
-              onPress={() => toggleChapter(ch.id)}
-              activeOpacity={0.7}
-            >
-              <Typography variant="h3" style={{ flex: 1, marginBottom: 0 }}>{ch.title}</Typography>
-              {expandedChapters[ch.id] ? <ChevronUp size={20} color={theme.colors.t3} /> : <ChevronDown size={20} color={theme.colors.t3} />}
-            </TouchableOpacity>
+            <Typography variant="h1" style={styles.headerTitle}>{data.module.title}</Typography>
+            <Typography variant="body" style={styles.headerDesc}>{data.module.description}</Typography>
+
+            <View style={styles.progressSection}>
+              <View style={styles.progTextRow}>
+                <Typography variant="small" style={{ color: '#fff', opacity: 0.8 }}>
+                  Overall Progress: {data.overall_pct}%
+                </Typography>
+                <Typography variant="small" style={{ color: '#fff', opacity: 0.8 }}>
+                  {data.done_mats}/{data.total_mats} completed
+                </Typography>
+              </View>
+              <View style={styles.progBarBg}>
+                <View style={[styles.progBarFill, { width: `${data.overall_pct}%` }]} />
+              </View>
+            </View>
+
+            <View style={styles.headerMetaRow}>
+              <View style={styles.metaItem}>
+                <Layers size={14} color="#fff" style={{ opacity: 0.7 }} />
+                <Typography variant="caption" style={styles.metaText}>
+                  {data.module.training_type.replace('_',' ')}
+                </Typography>
+              </View>
+              {data.module.meet_link && (
+                <TouchableOpacity 
+                  style={styles.metaItem}
+                  onPress={() => {
+                    const url = data.module.meet_link;
+                    if (url) {
+                      Linking.openURL(url).catch(() => Alert.alert("Error", "Cannot open meet link"));
+                    }
+                  }}
+                >
+                  {data.module.training_type === 'virtual' ? <Video size={14} color="#fff" /> : <MapPin size={14} color="#fff" />}
+                  <Typography variant="caption" style={styles.metaText}>
+                    {data.module.training_type === 'virtual' ? 'Join Meet' : 'Meet Link'}
+                  </Typography>
+                </TouchableOpacity>
+              )}
+            </View>
             
-            {expandedChapters[ch.id] && (
+            <View style={styles.moduleWindowRow}>
+              <View style={styles.windowBox}>
+                <Clock size={12} color="#fff" style={{ opacity: 0.7 }} />
+                <View>
+                  <Typography variant="small" style={styles.headerLabel}>STARTS</Typography>
+                  <Typography variant="caption" style={styles.whiteText}>
+                    {new Date(data.module.start_datetime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                  </Typography>
+                </View>
+              </View>
+              <View style={styles.windowBox}>
+                <Clock size={12} color="#fff" style={{ opacity: 0.7 }} />
+                <View>
+                  <Typography variant="small" style={styles.headerLabel}>ENDS</Typography>
+                  <Typography variant="caption" style={styles.whiteText}>
+                    {data.module.end_datetime ? new Date(data.module.end_datetime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'No Deadline'}
+                  </Typography>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.content}>
+          <Typography variant="h3" style={styles.sectionTitle}>Course Content</Typography>
+          
+          {data.chapters.map(ch => (
+            <View key={ch.id} style={styles.chapterBox}>
+              <TouchableOpacity 
+                style={styles.chapterHead} 
+                onPress={() => toggleChapter(ch.id)}
+                activeOpacity={0.7}
+              >
+                <Typography variant="h3" style={{ flex: 1, marginBottom: 0 }}>{ch.title}</Typography>
+                {expandedChapters[ch.id] ? <ChevronUp size={20} color={theme.colors.t3} /> : <ChevronDown size={20} color={theme.colors.t3} />}
+              </TouchableOpacity>
+              
+              {expandedChapters[ch.id] && (
+                <View style={styles.chapterBody}>
+                  {data.mat_by_chapter[ch.id]?.map(mat => (
+                    <MaterialRow key={mat.id} mat={mat} />
+                  ))}
+                </View>
+              )}
+            </View>
+          ))}
+
+          {data.mat_by_chapter[0]?.length > 0 && (
+            <View style={styles.chapterBox}>
+              <Typography variant="h3" style={styles.chapterHead}>Uncategorized</Typography>
               <View style={styles.chapterBody}>
-                {data.mat_by_chapter[ch.id]?.map(mat => (
+                {data.mat_by_chapter[0].map(mat => (
                   <MaterialRow key={mat.id} mat={mat} />
                 ))}
               </View>
-            )}
-          </View>
-        ))}
-
-        {data.mat_by_chapter[0]?.length > 0 && (
-          <View style={styles.chapterBox}>
-            <Typography variant="h3" style={styles.chapterHead}>Uncategorized</Typography>
-            <View style={styles.chapterBody}>
-              {data.mat_by_chapter[0].map(mat => (
-                <MaterialRow key={mat.id} mat={mat} />
-              ))}
             </View>
-          </View>
-        )}
+          )}
 
-        <Spacer h={24} />
-        <Typography variant="h3" style={styles.secTitle}>Assessments</Typography>
-        {data.tests.map(t => <TestCard key={t.id} test={t} />)}
+          <Spacer h={24} />
+          <Typography variant="h3" style={styles.sectionTitle}>Assessments</Typography>
+          {data.tests.map(t => <TestCard key={t.id} test={t} />)}
 
-        <Spacer h={40} />
+          <Spacer h={40} />
+        </View>
       </ScrollView>
     </View>
   );
@@ -207,80 +313,188 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  header: {
-    paddingTop: 50,
-    paddingBottom: 15,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-    gap: 15,
+  premiumHeader: {
+    paddingTop: 60,
+    paddingBottom: 40,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
   },
   backBtn: {
-    width: 40,
-    height: 40,
+    padding: 12,
+    marginLeft: 12,
+  },
+  headerContent: {
+    paddingHorizontal: 24,
+    paddingTop: 10,
+  },
+  headerTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.card2,
+    marginBottom: 12,
+  },
+  headerCat: {
+    color: '#fff',
+    opacity: 0.8,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  headerPhaseBadge: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  headerTitle: {
+    color: '#fff',
+    fontSize: 28,
+    lineHeight: 34,
+    marginBottom: 12,
+  },
+  headerDesc: {
+    color: '#fff',
+    opacity: 0.9,
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  progressSection: {
+    marginBottom: 20,
+  },
+  progTextRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  progBarBg: {
+    height: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 4,
+  },
+  progBarFill: {
+    height: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 4,
+  },
+  headerMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    paddingTop: 10,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 10,
   },
-  scroll: {
-    padding: 20,
+  metaText: {
+    color: '#fff',
+    fontWeight: '600',
+    textTransform: 'capitalize',
   },
-  secTitle: {
+  content: {
+    padding: 24,
+  },
+  sectionTitle: {
     marginBottom: 16,
+    color: theme.colors.t1,
   },
   chapterBox: {
     backgroundColor: theme.colors.card,
     borderRadius: theme.roundness.r4,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    marginBottom: 12,
+    borderColor: theme.colors.border + '30',
+    marginBottom: 16,
     overflow: 'hidden',
   },
   chapterHead: {
     padding: 16,
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: theme.colors.card2,
   },
   chapterBody: {
-    backgroundColor: theme.colors.card,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border + '30',
   },
   matRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
+    padding: 12,
     gap: 12,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border + '15',
   },
   matIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 6,
-    alignItems: 'center',
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   testCard: {
     backgroundColor: theme.colors.card,
-    borderRadius: theme.roundness.r4,
-    borderWidth: 1.5,
-    borderColor: theme.colors.border2,
-    padding: 16,
-    marginBottom: 12,
+    padding: 18,
+    borderRadius: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: theme.colors.border + '30',
   },
   testHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 8,
+  },
+  testWindowRow: {
+    flexDirection: 'row',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border + '15',
+    gap: 16,
+  },
+  windowLabel: {
+    color: theme.colors.t4,
+    fontSize: 9,
+    fontWeight: '800',
+    marginBottom: 2,
+    letterSpacing: 0.5,
+  },
+  moduleWindowRow: {
+    flexDirection: 'row',
+    gap: 20,
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+  },
+  windowBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerLabel: {
+    color: 'rgba(255,255,255,0.5)',
+    fontWeight: '800',
+    fontSize: 9,
+    letterSpacing: 1,
+  },
+  whiteText: {
+    color: '#fff',
+    fontWeight: '600',
   },
   attemptInfo: {
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
+    marginTop: 12,
+  },
+  resultBadge: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
   }
 });

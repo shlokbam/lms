@@ -18,6 +18,7 @@ export default function TraineeDashboard() {
   const [data, setData] = useState(null)
   const [filter, setFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     client.get('/api/trainee/dashboard').then(r => setData(r.data)).catch(() => {})
@@ -27,10 +28,14 @@ export default function TraineeDashboard() {
   if (!data) return <div style={{ padding:40, textAlign:'center', color:'var(--t3)' }}>Loading…</div>
   const { upcoming: rawUp, ongoing: rawOn, completed: rawComp, total_tests, passed_tests, notifications } = data
 
-  const typeFilt = (m) => typeFilter === 'all' || m.training_type === typeFilter
-  const upcoming = rawUp.filter(typeFilt)
-  const ongoing = rawOn.filter(typeFilt)
-  const completed = rawComp.filter(typeFilt)
+  const matches = (m) => {
+    const typeMatch = typeFilter === 'all' || m.training_type === typeFilter
+    const searchMatch = !search || m.title.toLowerCase().includes(search.toLowerCase()) || m.category?.toLowerCase().includes(search.toLowerCase())
+    return typeMatch && searchMatch
+  }
+  const upcoming = rawUp.filter(matches)
+  const ongoing = rawOn.filter(matches)
+  const completed = rawComp.filter(matches)
 
   const showLive = filter === 'all' || filter === 'live'
   const showUpcoming = filter === 'all' || filter === 'upcoming'
@@ -55,19 +60,44 @@ export default function TraineeDashboard() {
 
       <div style={{ display:'grid', gridTemplateColumns:'1fr 300px', gap:22, alignItems:'start' }}>
         <div>
-          <div className="sh anim-up d1" style={{ marginBottom: 16 }}>
-            <div>
-              <div className="sh-title">Learning Journey</div>
-              <div className="sh-sub">All your enrolled modules</div>
+          <div className="sh-info">
+            <h1 className="sh-title">Learning Journey</h1>
+            <p className="sh-sub">All your enrolled modules</p>
+          </div>
+          <div className="sh-actions" style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-end' }}>
+            {/* Row 1: Search & Status */}
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ position:'relative' }}>
+                <input 
+                  type="text" 
+                  className="input input-sm" 
+                  placeholder="Search modules..." 
+                  style={{ width:240, paddingLeft:32, background: 'var(--card2)', borderColor: 'var(--border)' }} 
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                <span style={{ position:'absolute', left:10, top:6, opacity:0.5 }}>🔍</span>
+              </div>
+              <div style={{ width:1, height:20, background:'var(--border)', margin:'0 4px' }} />
+              <div className="flex gap-2">
+                {['all','live','upcoming','ended'].map(f => (
+                  <button key={f} className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setFilter(f)}>
+                    {f === 'all' ? 'All' : f === 'live' ? 'Live' : f.charAt(0).toUpperCase() + f.slice(1)}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              {['all','live','upcoming','ended'].map(f => (
-                <button key={f} className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setFilter(f)}>
-                  {f.charAt(0).toUpperCase() + f.slice(1)}
-                </button>
-              ))}
-              <div style={{ width:1, height:24, background:'var(--border)', margin:'0 4px' }} />
-              {[{v:'all',l:'All Types'},{v:'self_paced',l:'Self-paced'},{v:'virtual',l:'Virtual'},{v:'classroom',l:'Classroom'}].map(f => (
+            {/* Row 2: Training Types */}
+            <div className="flex gap-2">
+              <button 
+                className={`btn btn-sm ${typeFilter === 'all' ? 'btn-primary' : 'btn-secondary'}`} 
+                onClick={() => setTypeFilter('all')}
+                style={{ fontWeight: 700 }}
+              >
+                All Types
+              </button>
+              <div style={{ width:1, height:20, background:'var(--border)', margin:'0 4px' }} />
+              {[{v:'self_paced',l:'Self-paced'},{v:'virtual',l:'Virtual'},{v:'classroom',l:'Classroom'}].map(f => (
                 <button key={f.v} className={`btn btn-sm ${typeFilter===f.v ? 'btn-primary':'btn-secondary'}`} onClick={()=>setTypeFilter(f.v)}>
                   {f.l}
                 </button>
