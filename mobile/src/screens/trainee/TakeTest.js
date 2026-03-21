@@ -30,6 +30,8 @@ export default function TakeTest({ route, navigation }) {
   const [timeLeft, setTimeLeft] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [notice, setNotice] = useState(null);
+  const [confirmModal, setConfirmModal] = useState({ show: false, subtext: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchTest();
@@ -68,30 +70,26 @@ export default function TakeTest({ route, navigation }) {
   };
 
   const handleSubmit = async () => {
-    Alert.alert(
-      'Submit Test',
-      'Are you sure you want to submit your answers?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Submit', 
-          onPress: async () => {
-            try {
-              const res = await api.post(`/api/trainee/test/${testId}/submit`, { answers });
-               navigation.replace('TestResult', { 
-                score: res.data.score, 
-                total: res.data.total, 
-                passed: res.data.passed,
-                testTitle: data.test.title,
-                moduleId: data.test.module_id
-              });
-            } catch (e) {
-              Alert.alert('Submission Failed', 'Please try again');
-            }
-          }
-        }
-      ]
-    );
+    setConfirmModal({ show: true, subtext: 'Are you sure you want to submit your answers?' });
+  };
+
+  const confirmSubmit = async () => {
+    setConfirmModal({ ...confirmModal, show: false });
+    setIsSubmitting(true);
+    try {
+      const res = await api.post(`/api/trainee/test/${testId}/submit`, { answers });
+      navigation.replace('TestResult', { 
+        score: res.data.score, 
+        total: res.data.total, 
+        passed: res.data.passed,
+        testTitle: data.test.title,
+        moduleId: data.test.module_id
+      });
+    } catch (e) {
+      setNotice({ title: 'Submission Failed', message: 'Please try again' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (loading || !data) return (
@@ -220,8 +218,18 @@ export default function TakeTest({ route, navigation }) {
         message={notice?.message}
         onConfirm={() => {
           setNotice(null);
-          navigation.goBack();
+          if (notice?.title !== 'Submission Failed') navigation.goBack();
         }}
+      />
+
+      <ThemedModal
+        visible={confirmModal.show}
+        title="Submit Test"
+        message={confirmModal.subtext}
+        onConfirm={confirmSubmit}
+        onClose={() => setConfirmModal({ ...confirmModal, show: false })}
+        confirmText={isSubmitting ? "Submitting..." : "Submit"}
+        confirmDisabled={isSubmitting}
       />
     </View>
   );

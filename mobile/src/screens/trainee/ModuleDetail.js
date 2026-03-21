@@ -40,6 +40,7 @@ export default function ModuleDetail({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [expandedChapters, setExpandedChapters] = useState({});
   const [notice, setNotice] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -59,6 +60,7 @@ export default function ModuleDetail({ route, navigation }) {
       console.error(e);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -112,6 +114,7 @@ export default function ModuleDetail({ route, navigation }) {
     let statusText = "";
     let statusColor = theme.colors.t3;
     let isLocked = false;
+    let phaseMessage = "";
 
     if (attempt) {
       statusText = isPassed ? "Passed" : "Attempted";
@@ -121,7 +124,6 @@ export default function ModuleDetail({ route, navigation }) {
       // Hierarchical check first
       const modPhase = data.phase; // pre, live, post
       let phaseAllowed = false;
-      let phaseMessage = "";
 
       if (test.test_type === 'pre') {
         phaseAllowed = (modPhase === 'pre' || modPhase === 'live');
@@ -134,21 +136,36 @@ export default function ModuleDetail({ route, navigation }) {
         phaseMessage = "Available after session starts";
       }
 
+      // Chain Unlock Logic: If Mid/Pre passed, allow next even if phase is slightly off
+      const preTest = data.tests.find(t => t.test_type === 'pre');
+      const midTest = data.tests.find(t => t.test_type === 'mid');
+      const prePassed = preTest ? (data.attempts_map[preTest.id]?.latest?.passed) : true;
+      const midPassed = midTest ? (data.attempts_map[midTest.id]?.latest?.passed) : true;
+
+      if (test.test_type === 'mid' && prePassed) phaseAllowed = true;
+      if (test.test_type === 'post' && (midPassed || prePassed)) phaseAllowed = true; // Even more permissive
+
       if (!phaseAllowed) {
         statusText = "Locked";
         statusColor = theme.colors.t4;
         isLocked = true;
+        // Specific reason for user feedback
+        if (test.test_type === 'mid') phaseMessage = "Complete Pre-test first";
+        if (test.test_type === 'post') phaseMessage = "Complete Mid-test first";
       } else if (start && now < start) {
         statusText = "Scheduled";
         statusColor = theme.colors.amber;
         isLocked = true;
-      } else if (end && now > end) {
+        phaseMessage = `Opens at ${new Date(start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      } else if (end && now >= end) { // Use >= for better accuracy at boundary
         statusText = "Closed";
         statusColor = theme.colors.red;
         isLocked = true;
+        phaseMessage = "Test window has ended";
       } else {
         statusText = "Open now";
         statusColor = theme.colors.green;
+        phaseMessage = "Assessment is ready";
       }
     }
 
@@ -174,6 +191,11 @@ export default function ModuleDetail({ route, navigation }) {
             <Typography variant="caption" style={{ color: statusColor, fontWeight: '700' }}>
               ● {statusText}
             </Typography>
+            {phaseMessage && (
+              <Typography variant="caption" style={{ color: theme.colors.t4, fontStyle: 'italic' }}>
+                ({phaseMessage})
+              </Typography>
+            )}
             {test.max_attempts > 1 && (
               <Typography variant="caption" style={{ color: theme.colors.t3 }}>
                 Attempts: {attData.count}/{test.max_attempts}
@@ -212,7 +234,16 @@ export default function ModuleDetail({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={() => { setRefreshing(true); fetchModule(); }} 
+            tintColor={theme.colors.acc} 
+          />
+        }
+      >
         {/* Professional Header */}
         <View style={styles.premiumHeader}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>

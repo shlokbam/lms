@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { theme } from '../../theme/theme';
-import { Typography, Card, Spacer, PremiumLoading } from '../../components/UI';
+import { Typography, Card, Spacer, PremiumLoading, ThemedModal } from '../../components/UI';
 import { ChevronLeft, GraduationCap, CheckCircle2, XCircle, Clock, Search } from 'lucide-react-native';
 import api from '../../api/api';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -15,6 +15,7 @@ export default function ModuleReports() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTestId, setActiveTestId] = useState(null);
+  const [notice, setNotice] = useState(null);
 
   useEffect(() => {
     fetchReports();
@@ -30,7 +31,7 @@ export default function ModuleReports() {
       }
     } catch (e) {
       console.error(e);
-      alert("Failed to load reports");
+      setNotice({ title: 'Error', message: "Failed to load reports" });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -154,6 +155,13 @@ export default function ModuleReports() {
         
         <Spacer h={60} />
       </ScrollView>
+
+      <ThemedModal 
+        visible={!!notice}
+        title={notice?.title}
+        message={notice?.message}
+        onConfirm={() => setNotice(null)}
+      />
     </View>
   );
 }

@@ -41,7 +41,7 @@ export default function Trainees() {
         <View style={styles.searchContainer}>
           <Search size={18} color={theme.colors.t4} />
           <TextInput 
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: theme.colors.t1 }]}
             placeholder="Search by name or email..."
             placeholderTextColor={theme.colors.t4}
             value={search}

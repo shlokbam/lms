@@ -70,7 +70,7 @@ export function Typography({ variant = 'body', style, children, ...props }) {
 
   return (
     <Text style={[getVariantStyle(), style]} {...props}>
-      {children}
+      {typeof children === 'string' ? <Text>{children}</Text> : children}
     </Text>
   );
 }
@@ -108,10 +108,10 @@ export function Button({ title, onPress, variant = 'primary', icon, style, textS
       onPress={onPress}
       {...props}
     >
-      {icon && icon}
-      <Typography style={[styles.btnText, getTextStyle(), textStyle]}>
+      {icon && React.createElement(icon, { size: 18, color: getTextStyle().color })}
+      <Text style={[styles.btnText, getTextStyle(), textStyle]}>
         {title}
-      </Typography>
+      </Text>
     </TouchableOpacity>
   );
 }
@@ -130,7 +130,9 @@ export function ThemedModal({ visible, title, message, onConfirm, onClose, confi
     <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', padding: 20, zIndex: 9999 }]}>
       <Card style={{ padding: 24, maxHeight: '90%' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <Typography variant="h2" style={{ marginBottom: 0 }}>{title}</Typography>
+          <Typography variant="h2" style={{ marginBottom: 0 }}>
+            <Text>{title}</Text>
+          </Typography>
           {onClose && (
             <TouchableOpacity onPress={onClose} style={{ padding: 4 }}>
               <Text style={{ color: theme.colors.t3, fontSize: 20 }}>✕</Text>
@@ -246,8 +248,12 @@ export function PremiumLoading({ message = "Loading content...", subtext = "Plea
     <View style={{ flex: 1, backgroundColor: theme.colors.bg, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
       <ActivityIndicator size="large" color={theme.colors.acc} />
       <Spacer h={24} />
-      <Typography variant="h3" style={{ textAlign: 'center', opacity: 0.8 }}>{message}</Typography>
-      <Typography variant="caption" style={{ textAlign: 'center', opacity: 0.6, marginTop: 8 }}>{subtext}</Typography>
+      <Typography variant="h3" style={{ textAlign: 'center', opacity: 0.8 }}>
+        <Text>{message}</Text>
+      </Typography>
+      <Typography variant="caption" style={{ textAlign: 'center', opacity: 0.6, marginTop: 8 }}>
+        <Text>{subtext}</Text>
+      </Typography>
     </View>
   );
 }

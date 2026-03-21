@@ -79,7 +79,7 @@ export default function TrainingModules() {
 
   const handleSchedule = async () => {
     if (!scheduleData.start_datetime || !scheduleData.end_datetime) {
-      alert("Please enter start and end times.");
+      setNotice({ title: 'Missing Info', message: "Please enter start and end times." });
       return;
     }
     setSubmitting(true);
@@ -93,7 +93,7 @@ export default function TrainingModules() {
       setSchedulingMod(null);
       fetchModules();
     } catch (e) {
-      alert(e.response?.data?.detail || "Failed to schedule module");
+      setNotice({ title: 'Error', message: e.response?.data?.detail || "Failed to schedule module" });
     } finally {
       setSubmitting(false);
     }
@@ -109,7 +109,7 @@ export default function TrainingModules() {
       fetchModules();
       setNotice({ title: 'Success', message: 'Module created and trainees enrolled!' });
     } catch (e) {
-      alert(e.response?.data?.detail || "Failed to create module");
+      setNotice({ title: 'Error', message: e.response?.data?.detail || "Failed to create module" });
     } finally {
       setSubmitting(false);
     }
@@ -160,7 +160,7 @@ export default function TrainingModules() {
         <View style={styles.searchContainer}>
           <Search size={18} color={theme.colors.t4} />
           <TextInput 
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: theme.colors.t1 }]}
             placeholder="Search modules..."
             placeholderTextColor={theme.colors.t4}
             value={search}
@@ -270,8 +270,9 @@ export default function TrainingModules() {
                         { text: "Delete", style: "destructive", onPress: async () => {
                           try {
                             await api.delete(`/api/trainer/module/${mod.id}`);
+                            setNotice({ title: 'Success', message: 'Module deleted successfully' });
                             fetchModules();
-                          } catch (e) { alert("Failed to delete module"); }
+                          } catch (e) { setNotice({ title: 'Error', message: "Failed to delete module" }); }
                         }}
                       ]);
                     }}
@@ -352,7 +353,7 @@ export default function TrainingModules() {
 
         <Typography variant="label">Meeting Link (Opt)</Typography>
         <TextInput 
-          style={styles.modalInput}
+          style={[styles.modalInput, { color: theme.colors.t1 }]}
           value={scheduleData.meet_link}
           onChangeText={(t) => setScheduleData(prev => ({...prev, meet_link: t}))}
           placeholder="https://meet.google.com/..."
@@ -378,7 +379,7 @@ export default function TrainingModules() {
       >
         <Typography variant="label" style={{ marginTop: 16 }}>Title *</Typography>
         <TextInput 
-          style={styles.modalInput}
+          style={[styles.modalInput, { color: theme.colors.t1 }]}
           placeholder="e.g. Advanced Safety Protocols"
           placeholderTextColor={theme.colors.t4}
           value={newModData.title}
@@ -386,7 +387,7 @@ export default function TrainingModules() {
         />
         <Typography variant="label" style={{ marginTop: 8 }}>Description</Typography>
         <TextInput 
-          style={[styles.modalInput, { height: 80, textAlignVertical: 'top', paddingTop: 12 }]}
+          style={[styles.modalInput, { height: 80, textAlignVertical: 'top', paddingTop: 12, color: theme.colors.t1 }]}
           placeholder="Brief overview of the module"
           placeholderTextColor={theme.colors.t4}
           value={newModData.description}
@@ -395,7 +396,7 @@ export default function TrainingModules() {
         />
         <Typography variant="label" style={{ marginTop: 8 }}>Category</Typography>
         <TextInput 
-          style={styles.modalInput}
+          style={[styles.modalInput, { color: theme.colors.t1 }]}
           placeholder="e.g. Safety, Technical, Soft Skills"
           placeholderTextColor={theme.colors.t4}
           value={newModData.category}
@@ -417,7 +418,7 @@ export default function TrainingModules() {
         <View style={[styles.searchContainer, { height: 40, marginBottom: 12, backgroundColor: theme.colors.card2 }]}>
           <Search size={14} color={theme.colors.t4} />
           <TextInput 
-            style={[styles.searchInput, { fontSize: 13 }]} 
+            style={[styles.searchInput, { fontSize: 13, color: theme.colors.t1 }]} 
             placeholder="Search trainees..." 
             placeholderTextColor={theme.colors.t4}
             value={traineeSearch}
@@ -469,6 +470,14 @@ export default function TrainingModules() {
           )}
         </View>
       </ThemedModal>
+
+      <ThemedModal
+        visible={modal.show}
+        title={modal.title}
+        message={modal.message}
+        onConfirm={() => setModal({ ...modal, show: false })}
+        confirmText="OK"
+      />
 
       {showPicker.show && (
       <DateTimePicker

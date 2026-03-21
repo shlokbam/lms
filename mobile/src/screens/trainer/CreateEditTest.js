@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, Switch } from 'react-native';
 import { theme } from '../../theme/theme';
-import { Typography, Card, Spacer, PremiumLoading, Button, ThemedPicker } from '../../components/UI';
+import { Typography, Card, Spacer, PremiumLoading, Button, ThemedPicker, ThemedModal } from '../../components/UI';
 import { ChevronLeft, Plus, Trash2, Clock, Calendar, CheckSquare, Save } from 'lucide-react-native';
 import api from '../../api/api';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -26,6 +26,7 @@ export default function CreateEditTest() {
       { text: '', a: '', b: '', c: '', d: '', correct: 'A', marks: 1 }
     ]
   });
+  const [modal, setModal] = useState({ show: false, title: '', message: '', type: 'success' });
 
   const [showPicker, setShowPicker] = useState({ show: false, field: null, mode: 'date' });
 
@@ -127,11 +128,19 @@ export default function CreateEditTest() {
         await api.post(`/api/trainer/module/${moduleId}/test`, payload);
       }
       
-      Alert.alert("Success", "Test saved successfully!", [
-        { text: "OK", onPress: () => navigation.goBack() }
-      ]);
+      setModal({
+        show: true,
+        title: 'Success',
+        message: 'Test saved successfully!',
+        type: 'success'
+      });
     } catch (e) {
-      alert(e.response?.data?.detail || "Failed to save test");
+      setModal({
+        show: true,
+        title: 'Error',
+        message: e.response?.data?.detail || "Failed to save test",
+        type: 'error'
+      });
     } finally {
       setSubmitting(false);
     }
@@ -254,7 +263,7 @@ export default function CreateEditTest() {
             <View style={styles.row}>
               <View style={styles.qBadge}><Typography style={{ color: '#fff', fontWeight: 'bold' }}>{qIdx + 1}</Typography></View>
               <TextInput 
-                style={[styles.input, { flex: 1, marginLeft: 12, marginBottom: 0 }]}
+                style={[styles.input, { flex: 1, marginLeft: 12, marginBottom: 0, color: theme.colors.t1 }]}
                 placeholder="Question text..."
                 placeholderTextColor={theme.colors.t4}
                 value={q.text}
@@ -279,7 +288,7 @@ export default function CreateEditTest() {
                     </Typography>
                   </TouchableOpacity>
                   <TextInput 
-                    style={[styles.input, { flex: 1, marginBottom: 0, height: 40, fontSize: 13 }]}
+                    style={[styles.input, { flex: 1, marginBottom: 0, height: 40, fontSize: 13, color: theme.colors.t1 }]}
                     placeholder={`Option ${opt.toUpperCase()}`}
                     placeholderTextColor={theme.colors.t4}
                     value={q[opt]}
@@ -292,7 +301,7 @@ export default function CreateEditTest() {
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
               <Typography variant="small" style={{ color: theme.colors.t4 }}>Marks:</Typography>
               <TextInput 
-                style={[styles.input, { width: 40, height: 30, marginBottom: 0, marginLeft: 8, textAlign: 'center', fontSize: 12 }]}
+                style={[styles.input, { width: 40, height: 30, marginBottom: 0, marginLeft: 8, textAlign: 'center', fontSize: 12, color: theme.colors.t1 }]}
                 value={String(q.marks)}
                 keyboardType="numeric"
                 onChangeText={(t) => updateQuestion(qIdx, 'marks', parseInt(t) || 1)}
@@ -305,6 +314,17 @@ export default function CreateEditTest() {
 
         <Spacer h={100} />
       </ScrollView>
+
+      <ThemedModal
+        visible={modal.show}
+        title={modal.title}
+        message={modal.message}
+        onConfirm={() => {
+          setModal({ ...modal, show: false });
+          if (modal.title === 'Success') navigation.goBack();
+        }}
+        confirmText="OK"
+      />
 
       {showPicker.show && (
       <DateTimePicker

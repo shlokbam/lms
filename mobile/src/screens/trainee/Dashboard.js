@@ -174,7 +174,7 @@ export default function TraineeDashboard({ navigation }) {
         <View style={styles.searchContainer}>
           <Search size={18} color={theme.colors.t3} style={styles.searchIcon} />
           <TextInput 
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: theme.colors.t1 }]}
             placeholder="Search modules..."
             placeholderTextColor={theme.colors.t4}
             value={searchQuery}

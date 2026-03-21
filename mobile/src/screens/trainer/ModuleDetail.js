@@ -38,6 +38,7 @@ export default function TrainerModuleDetail() {
   });
   const [showPicker, setShowPicker] = useState({ show: false, field: null, mode: 'date' });
   const [reportData, setReportData] = useState(null);
+  const [notice, setNotice] = useState(null);
 
   const formatDateForBackend = (date) => {
     if (!date) return '';
@@ -94,7 +95,7 @@ export default function TrainerModuleDetail() {
       }
     } catch (e) {
       console.error(e);
-      alert("Failed to load module details");
+      setNotice({ title: 'Error', message: "Failed to load module details" });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -112,7 +113,7 @@ export default function TrainerModuleDetail() {
       setAddingChapter(false);
       fetchDetail();
     } catch (e) {
-      alert("Failed to add chapter");
+      setNotice({ title: 'Error', message: "Failed to add chapter" });
     } finally {
       setSubmitting(false);
     }
@@ -124,8 +125,9 @@ export default function TrainerModuleDetail() {
       { text: "Delete", style: "destructive", onPress: async () => {
         try {
           await api.delete(`/api/trainer/module/${moduleId}/chapter/${chId}`);
+          setNotice({ title: 'Success', message: 'Chapter deleted successfully' });
           fetchDetail();
-        } catch (e) { alert("Failed to delete chapter"); }
+        } catch (e) { setNotice({ title: 'Error', message: "Failed to delete chapter" }); }
       }}
     ]);
   };
@@ -147,7 +149,7 @@ export default function TrainerModuleDetail() {
       }
     } catch (err) {
       console.error(err);
-      alert("Error picking file");
+      setNotice({ title: 'Error', message: "Error picking file" });
     }
   };
 
@@ -181,7 +183,7 @@ export default function TrainerModuleDetail() {
       fetchDetail();
     } catch (e) {
       console.error(e);
-      alert(e.response?.data?.detail || "Upload failed");
+      setNotice({ title: 'Error', message: e.response?.data?.detail || "Upload failed" });
     } finally {
       setSubmitting(false);
     }
@@ -193,8 +195,9 @@ export default function TrainerModuleDetail() {
       { text: "Delete", style: "destructive", onPress: async () => {
         try {
           await api.delete(`/api/trainer/module/${moduleId}/material/${matId}`);
+          setNotice({ title: 'Success', message: 'Material deleted successfully' });
           fetchDetail();
-        } catch (e) { alert("Failed to delete material"); }
+        } catch (e) { setNotice({ title: 'Error', message: "Failed to delete material" }); }
       }}
     ]);
   };
@@ -205,8 +208,9 @@ export default function TrainerModuleDetail() {
       { text: "Delete", style: "destructive", onPress: async () => {
         try {
           await api.delete(`/api/trainer/module/${moduleId}/test/${testId}`);
+          setNotice({ title: 'Success', message: 'Test deleted successfully' });
           fetchDetail();
-        } catch (e) { alert("Failed to delete test"); }
+        } catch (e) { setNotice({ title: 'Error', message: "Failed to delete test" }); }
       }}
     ]);
   };
@@ -218,7 +222,7 @@ export default function TrainerModuleDetail() {
       setSchedModal(false);
       fetchDetail();
     } catch (e) {
-      alert("Failed to save schedule");
+      setNotice({ title: 'Error', message: "Failed to save schedule" });
     } finally {
       setSubmitting(false);
     }
@@ -368,18 +372,48 @@ export default function TrainerModuleDetail() {
             ) : (
               tests.map(test => (
                 <Card key={test.id} style={styles.testCard}>
-                  <View style={styles.row}>
-                    <Beaker size={20} color={theme.colors.acc} />
-                    <View style={{ flex: 1, marginLeft: 12 }}>
-                      <Typography variant="h3" style={{ marginBottom: 2 }}>{test.title}</Typography>
-                      <Typography variant="small" style={{ color: theme.colors.t4 }}>{test.test_type.toUpperCase()} • {test.duration_minutes}m</Typography>
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                        <Beaker size={18} color={theme.colors.acc} />
+                        <Typography variant="h3" style={{ marginLeft: 10, marginBottom: 0 }}>
+                          <Text>{test.title}</Text>
+                        </Typography>
+                      </View>
+                      
+                      <View style={{ flexDirection: 'row', gap: 6, marginBottom: 8 }}>
+                         <View style={[styles.badge, { backgroundColor: test.test_type==='pre' ? theme.colors.info+'20' : (test.test_type==='mid' ? theme.colors.warning+'20' : theme.colors.acc+'20') }]}>
+                            <Typography variant="small" style={{ color: test.test_type==='pre' ? theme.colors.info : (test.test_type==='mid' ? theme.colors.warning : theme.colors.acc), fontSize: 10, fontWeight: '700' }}>
+                              <Text>{test.test_type.toUpperCase()}-TEST</Text>
+                            </Typography>
+                         </View>
+                         <View style={[styles.badge, { backgroundColor: theme.colors.card2 }]}>
+                            <Typography variant="small" style={{ color: theme.colors.t3, fontSize: 10 }}>
+                              <Text>{test.duration_minutes}m</Text>
+                            </Typography>
+                         </View>
+                      </View>
+
+                      <Typography variant="small" style={{ color: theme.colors.t3, marginBottom: 4 }}>
+                        <Text>Pass: {test.passing_marks}% • Max attempts: {test.max_attempts}</Text>
+                      </Typography>
+
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                         <Clock size={12} color={theme.colors.t4} />
+                         <Typography variant="small" style={{ color: theme.colors.t4, marginLeft: 6 }}>
+                            <Text>{formatDateForDisplay(test.start_datetime)} → {formatDateForDisplay(test.end_datetime)}</Text>
+                         </Typography>
+                      </View>
                     </View>
-                    <TouchableOpacity onPress={() => navigation.navigate('CreateEditTest', { moduleId, testId: test.id })}>
-                      <Typography style={{ color: theme.colors.acc, marginRight: 12 }}>Edit</Typography>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => deleteTest(test.id)}>
-                      <Trash2 size={18} color={theme.colors.red} style={{ opacity: 0.7 }} />
-                    </TouchableOpacity>
+
+                    <View style={{ flexDirection: 'row', gap: 12 }}>
+                      <TouchableOpacity onPress={() => navigation.navigate('CreateEditTest', { moduleId, testId: test.id })}>
+                        <Edit3 size={18} color={theme.colors.t3} />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => deleteTest(test.id)}>
+                        <Trash2 size={18} color={theme.colors.red} style={{ opacity: 0.7 }} />
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </Card>
               ))
@@ -454,7 +488,7 @@ export default function TrainerModuleDetail() {
       >
         <Typography variant="label">Chapter Title *</Typography>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { color: theme.colors.t1 }]}
           placeholder="e.g., Introduction & Overview"
           placeholderTextColor={theme.colors.t4}
           value={newChapterTitle}
@@ -486,7 +520,7 @@ export default function TrainerModuleDetail() {
 
         <Typography variant="label" style={{ marginTop: 16, fontSize: 10, fontWeight: '700', color: theme.colors.t4, textTransform: 'uppercase' }}>Title</Typography>
         <TextInput
-          style={styles.webLikeInput}
+          style={[styles.webLikeInput, { color: theme.colors.t1 }]}
           placeholder="Display name (optional)"
           placeholderTextColor={theme.colors.t4}
           value={uploadForm.title}
@@ -609,7 +643,7 @@ export default function TrainerModuleDetail() {
           <View style={{ marginTop: 16 }}>
             <Typography variant="label">Meeting Link / Location</Typography>
             <TextInput
-              style={styles.webLikeInput}
+              style={[styles.webLikeInput, { color: theme.colors.t1 }]}
               placeholder="URL or Address"
               value={schedForm.meet_link}
               onChangeText={(v) => setSchedForm(f => ({ ...f, meet_link: v }))}
@@ -617,6 +651,13 @@ export default function TrainerModuleDetail() {
           </View>
         )}
       </ThemedModal>
+
+      <ThemedModal 
+        visible={!!notice}
+        title={notice?.title}
+        message={notice?.message}
+        onConfirm={() => setNotice(null)}
+      />
     </View>
   );
 }
@@ -663,7 +704,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.acc,
     borderColor: theme.colors.acc
   },
-  modalInput: { 
+  input: {
     backgroundColor: theme.colors.card2, 
     color: theme.colors.t1, 
     borderRadius: 10, 
