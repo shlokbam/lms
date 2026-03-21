@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, Switch } from 'react-native';
 import { theme } from '../../theme/theme';
-import { Typography, Card, Spacer, PremiumLoading, Button } from '../../components/UI';
+import { Typography, Card, Spacer, PremiumLoading, Button, ThemedPicker } from '../../components/UI';
 import { ChevronLeft, Plus, Trash2, Clock, Calendar, CheckSquare, Save } from 'lucide-react-native';
 import api from '../../api/api';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import RNPickerSelect from 'react-native-picker-select';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function CreateEditTest() {
   const navigation = useNavigation();
@@ -27,6 +28,20 @@ export default function CreateEditTest() {
     ]
   });
 
+  const [showPicker, setShowPicker] = useState({ show: false, field: null, mode: 'date' });
+
+  const formatDateForBackend = (date) => {
+    if (!date) return '';
+    const pad = (n) => n.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+
+  const formatDateForDisplay = (str) => {
+    if (!str) return 'Select...';
+    const d = new Date(str);
+    return d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+  };
+
   useEffect(() => {
     if (testId) {
       fetchTestDetails();
@@ -38,8 +53,8 @@ export default function CreateEditTest() {
       
       setTestData(prev => ({
         ...prev,
-        start_datetime: now.toISOString().slice(0, 16).replace('T', ' '),
-        end_datetime: tomorrow.toISOString().slice(0, 16).replace('T', ' ')
+        start_datetime: formatDateForBackend(now),
+        end_datetime: formatDateForBackend(tomorrow)
       }));
     }
   }, [testId]);
@@ -54,8 +69,8 @@ export default function CreateEditTest() {
         title: data.title,
         test_type: data.test_type,
         duration: data.duration_minutes,
-        start_datetime: data.start_datetime ? data.start_datetime.slice(0, 16).replace('T', ' ') : '',
-        end_datetime: data.end_datetime ? data.end_datetime.slice(0, 16).replace('T', ' ') : '',
+        start_datetime: data.start_datetime ? data.start_datetime.slice(0, 16) : '',
+        end_datetime: data.end_datetime ? data.end_datetime.slice(0, 16) : '',
         passing_marks: data.passing_marks,
         max_attempts: data.max_attempts,
         questions: data.questions.map(q => ({
@@ -103,8 +118,8 @@ export default function CreateEditTest() {
     try {
       const payload = {
         ...testData,
-        start_datetime: testData.start_datetime.replace(' ', 'T') + ":00",
-        end_datetime: testData.end_datetime.replace(' ', 'T') + ":00"
+        start_datetime: testData.start_datetime + ":00",
+        end_datetime: testData.end_datetime + ":00"
       };
 
       if (testId) {
@@ -158,19 +173,16 @@ export default function CreateEditTest() {
 
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
-              <Typography variant="label">Test Type</Typography>
-              <View style={styles.pickerContainer}>
-                <RNPickerSelect
-                  onValueChange={(v) => setTestData(p => ({...p, test_type: v}))}
-                  value={testData.test_type}
-                  items={[
-                    { label: 'Pre-Test', value: 'pre' },
-                    { label: 'Mid-Test', value: 'mid' },
-                    { label: 'Post-Test', value: 'post' }
-                  ]}
-                  style={{ inputIOS: styles.pickerInput, inputAndroid: styles.pickerInput, placeholder: { color: theme.colors.t4 } }}
-                />
-              </View>
+              <ThemedPicker
+                label="Test Type"
+                value={testData.test_type}
+                onValueChange={(v) => setTestData(p => ({...p, test_type: v}))}
+                items={[
+                  { label: 'Pre-Test', value: 'pre' },
+                  { label: 'Mid-Test', value: 'mid' },
+                  { label: 'Post-Test', value: 'post' }
+                ]}
+              />
             </View>
             <Spacer w={12} />
             <View style={{ flex: 1 }}>
@@ -206,23 +218,29 @@ export default function CreateEditTest() {
             </View>
           </View>
 
-          <Typography variant="label">Start Time (YYYY-MM-DD HH:MM)</Typography>
-          <TextInput 
-            style={styles.input}
-            value={testData.start_datetime}
-            onChangeText={(t) => setTestData(p => ({...p, start_datetime: t}))}
-            placeholder="2024-03-21 10:00"
-            placeholderTextColor={theme.colors.t4}
-          />
+          <Typography variant="label">Start Time</Typography>
+          <TouchableOpacity 
+            style={styles.input} 
+            onPress={() => setShowPicker({ show: true, field: 'start_datetime', mode: 'date' })}
+          >
+            <View style={{ flex: 1, justifyContent: 'center' }}>
+              <Typography style={{ color: testData.start_datetime ? '#fff' : theme.colors.t4, fontSize: 13 }}>
+                {formatDateForDisplay(testData.start_datetime)}
+              </Typography>
+            </View>
+          </TouchableOpacity>
 
-          <Typography variant="label">End Time (YYYY-MM-DD HH:MM)</Typography>
-          <TextInput 
-            style={styles.input}
-            value={testData.end_datetime}
-            onChangeText={(t) => setTestData(p => ({...p, end_datetime: t}))}
-            placeholder="2024-03-22 10:00"
-            placeholderTextColor={theme.colors.t4}
-          />
+          <Typography variant="label">End Time</Typography>
+          <TouchableOpacity 
+            style={styles.input} 
+            onPress={() => setShowPicker({ show: true, field: 'end_datetime', mode: 'date' })}
+          >
+            <View style={{ flex: 1, justifyContent: 'center' }}>
+              <Typography style={{ color: testData.end_datetime ? '#fff' : theme.colors.t4, fontSize: 13 }}>
+                {formatDateForDisplay(testData.end_datetime)}
+              </Typography>
+            </View>
+          </TouchableOpacity>
         </Card>
 
         <Spacer h={24} />
@@ -288,7 +306,31 @@ export default function CreateEditTest() {
 
         <Spacer h={100} />
       </ScrollView>
-    </View>
+
+      {showPicker.show && (
+      <DateTimePicker
+        value={testData[showPicker.field] ? new Date(testData[showPicker.field]) : new Date()}
+        mode={showPicker.mode}
+        is24Hour={true}
+        display="default"
+        onChange={(event, selectedDate) => {
+          if (event.type === 'dismissed') {
+            setShowPicker({ show: false, field: null, mode: 'date' });
+            return;
+          }
+          
+          const currentDate = selectedDate || new Date();
+          if (showPicker.mode === 'date') {
+            setShowPicker({ ...showPicker, mode: 'time' });
+            setTestData(f => ({ ...f, [showPicker.field]: formatDateForBackend(currentDate) }));
+          } else {
+            setShowPicker({ show: false, field: null, mode: 'date' });
+            setTestData(f => ({ ...f, [showPicker.field]: formatDateForBackend(currentDate) }));
+          }
+        }}
+      />
+    )}
+  </View>
   );
 }
 

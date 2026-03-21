@@ -263,6 +263,32 @@ img{max-width:100%;display:block}
 .form-textarea{min-height:92px;resize:vertical;line-height:1.6}
 .form-select{cursor:pointer}
 
+/* Premium Date/Time Picker Styling */
+input[type="datetime-local"] {
+  cursor: pointer;
+  position: relative;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  filter: invert(var(--theme-is-dark, 0));
+  transition: opacity 0.2s;
+}
+
+[data-theme="dark"] input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+input[type="datetime-local"]:hover::-webkit-calendar-picker-indicator {
+  opacity: 1;
+}
+
+/* Ensure consistent text color in pickers */
+input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper {
+  color: inherit;
+}
+
 .color-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-top:8px}
 .color-dot{width:28px;height:28px;border-radius:50%;cursor:pointer;transition:all .2s;border:3px solid transparent}
 .color-dot:hover{transform:scale(1.15)}

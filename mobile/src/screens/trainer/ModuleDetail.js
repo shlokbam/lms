@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert, TextInput } from 'react-native';
 import { theme } from '../../theme/theme';
-import { Typography, Card, Spacer, PremiumLoading, Button, ThemedModal } from '../../components/UI';
+import { Typography, Card, Spacer, PremiumLoading, Button, ThemedModal, ThemedPicker } from '../../components/UI';
 import { ChevronLeft, Plus, Trash2, FileText, Video, Layers, Beaker, Calendar, Upload, BarChart2 } from 'lucide-react-native';
 import api from '../../api/api';
 import * as DocumentPicker from 'expo-document-picker';
 import RNPickerSelect from 'react-native-picker-select';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function TrainerModuleDetail() {
   const navigation = useNavigation();
@@ -26,7 +27,6 @@ export default function TrainerModuleDetail() {
   const [addingMaterial, setAddingMaterial] = useState(false);
   const [uploadForm, setUploadForm] = useState({ title: '', phase: 'pre', chapter_id: null, file: null });
   const [submitting, setSubmitting] = useState(false);
-  const [reportData, setReportData] = useState(null);
   const [selectedTestId, setSelectedTestId] = useState(null);
   const [schedModal, setSchedModal] = useState(false);
   const [schedForm, setSchedForm] = useState({ 
@@ -37,6 +37,19 @@ export default function TrainerModuleDetail() {
     training_type: 'self_paced', 
     meet_link: '' 
   });
+  const [showPicker, setShowPicker] = useState({ show: false, field: null, mode: 'date' });
+
+  const formatDateForBackend = (date) => {
+    if (!date) return '';
+    const pad = (n) => n.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+
+  const formatDateForDisplay = (str) => {
+    if (!str) return 'Select...';
+    const d = new Date(str);
+    return d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+  };
 
   useEffect(() => {
     if (moduleId) {
@@ -474,16 +487,15 @@ export default function TrainerModuleDetail() {
             </View>
           </View>
           <View style={{ flex: 1 }}>
-            <Typography variant="label" style={{ fontSize: 10, fontWeight: '700', color: theme.colors.t4, textTransform: 'uppercase', marginBottom: 8 }}>Chapter</Typography>
-            <View style={styles.webLikePicker}>
-              <RNPickerSelect
-                onValueChange={(v) => setUploadForm(f => ({ ...f, chapter_id: v }))}
-                value={uploadForm.chapter_id}
-                placeholder={{ label: 'None', value: null }}
-                items={chapters.map(ch => ({ label: ch.title, value: ch.id }))}
-                style={{ inputIOS: styles.pickerInput, inputAndroid: styles.pickerInput, placeholder: { color: theme.colors.t4 } }}
-              />
-            </View>
+            <ThemedPicker
+              label="Select Chapter"
+              value={uploadForm.chapter_id}
+              onValueChange={(v) => setUploadForm(prev => ({ ...prev, chapter_id: v }))}
+              items={[
+                { label: 'None (Uncategorized)', value: null },
+                ...chapters.map(c => ({ label: c.title, value: c.id }))
+              ]}
+            />
           </View>
         </View>
       </ThemedModal>
@@ -499,53 +511,77 @@ export default function TrainerModuleDetail() {
         <View style={{ flexDirection: 'row', gap: 16 }}>
           <View style={{ flex: 1 }}>
             <Typography variant="label">Start Date & Time</Typography>
-            <TextInput
-              style={styles.webLikeInput}
-              placeholder="YYYY-MM-DDTHH:MM"
-              value={schedForm.start_datetime}
-              onChangeText={(v) => setSchedForm(f => ({ ...f, start_datetime: v }))}
-            />
+            <TouchableOpacity 
+              style={styles.webLikeInput} 
+              onPress={() => setShowPicker({ show: true, field: 'start_datetime', mode: 'date' })}
+            >
+              <Typography style={{ color: schedForm.start_datetime ? '#fff' : theme.colors.t4, fontSize: 13 }}>
+                {formatDateForDisplay(schedForm.start_datetime)}
+              </Typography>
+            </TouchableOpacity>
           </View>
           <View style={{ flex: 1 }}>
             <Typography variant="label">End Date & Time</Typography>
-            <TextInput
-              style={styles.webLikeInput}
-              placeholder="YYYY-MM-DDTHH:MM"
-              value={schedForm.end_datetime}
-              onChangeText={(v) => setSchedForm(f => ({ ...f, end_datetime: v }))}
-            />
+            <TouchableOpacity 
+              style={styles.webLikeInput} 
+              onPress={() => setShowPicker({ show: true, field: 'end_datetime', mode: 'date' })}
+            >
+              <Typography style={{ color: schedForm.end_datetime ? '#fff' : theme.colors.t4, fontSize: 13 }}>
+                {formatDateForDisplay(schedForm.end_datetime)}
+              </Typography>
+            </TouchableOpacity>
           </View>
         </View>
 
+        {showPicker.show && (
+          <DateTimePicker
+            value={schedForm[showPicker.field] ? new Date(schedForm[showPicker.field]) : new Date()}
+            mode={showPicker.mode}
+            is24Hour={true}
+            display="default"
+            onChange={(event, selectedDate) => {
+              if (event.type === 'dismissed') {
+                setShowPicker({ show: false, field: null, mode: 'date' });
+                return;
+              }
+              
+              const currentDate = selectedDate || new Date();
+              if (showPicker.mode === 'date') {
+                // After picking date, pick time
+                setShowPicker({ ...showPicker, mode: 'time' });
+                setSchedForm(f => ({ ...f, [showPicker.field]: formatDateForBackend(currentDate) }));
+              } else {
+                // After picking time, close
+                setShowPicker({ show: false, field: null, mode: 'date' });
+                setSchedForm(f => ({ ...f, [showPicker.field]: formatDateForBackend(currentDate) }));
+              }
+            }}
+          />
+        )}
+
         <View style={{ flexDirection: 'row', gap: 16, marginTop: 16 }}>
           <View style={{ flex: 1 }}>
-            <Typography variant="label">Status</Typography>
-            <View style={styles.webLikePicker}>
-              <RNPickerSelect
-                onValueChange={(v) => setSchedForm(f => ({ ...f, status: v }))}
-                value={schedForm.status}
-                items={[
-                  { label: 'Published', value: 'published' },
-                  { label: 'Draft', value: 'draft' }
-                ]}
-                style={{ inputIOS: styles.pickerInput, inputAndroid: styles.pickerInput }}
-              />
-            </View>
+            <ThemedPicker
+              label="Status"
+              value={schedForm.status}
+              onValueChange={(v) => setSchedForm(f => ({ ...f, status: v }))}
+              items={[
+                { label: 'Published', value: 'published' },
+                { label: 'Draft', value: 'draft' }
+              ]}
+            />
           </View>
           <View style={{ flex: 1 }}>
-            <Typography variant="label">Type</Typography>
-            <View style={styles.webLikePicker}>
-              <RNPickerSelect
-                onValueChange={(v) => setSchedForm(f => ({ ...f, training_type: v }))}
-                value={schedForm.training_type}
-                items={[
-                  { label: 'Self-paced', value: 'self_paced' },
-                  { label: 'Virtual', value: 'virtual' },
-                  { label: 'Classroom', value: 'classroom' }
-                ]}
-                style={{ inputIOS: styles.pickerInput, inputAndroid: styles.pickerInput }}
-              />
-            </View>
+            <ThemedPicker
+              label="Type"
+              value={schedForm.training_type}
+              onValueChange={(v) => setSchedForm(f => ({ ...f, training_type: v }))}
+              items={[
+                { label: 'Self-paced', value: 'self_paced' },
+                { label: 'Virtual', value: 'virtual' },
+                { label: 'Classroom', value: 'classroom' }
+              ]}
+            />
           </View>
         </View>
 

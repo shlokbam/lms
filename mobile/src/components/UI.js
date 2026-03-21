@@ -173,6 +173,74 @@ export function ThemedModal({ visible, title, message, onConfirm, onClose, confi
   );
 }
 
+export function ThemedPicker({ label, value, items, onValueChange, placeholder = "Select..." }) {
+  const [modalVisible, setModalVisible] = React.useState(false);
+  const selectedItem = items.find(i => i.value === value);
+
+  return (
+    <View style={{ marginBottom: 16 }}>
+      {label && <Typography variant="label">{label}</Typography>}
+      <TouchableOpacity 
+        style={[{
+          backgroundColor: theme.colors.card2,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
+          borderRadius: 10,
+          height: 48,
+          justifyContent: 'center',
+          paddingHorizontal: 12
+        }]}
+        onPress={() => setModalVisible(true)}
+      >
+        <Typography style={{ color: value ? theme.colors.t1 : theme.colors.t4, fontSize: 14 }}>
+          {selectedItem ? selectedItem.label : placeholder}
+        </Typography>
+      </TouchableOpacity>
+
+      <Modal visible={modalVisible} transparent animationType="fade">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', padding: 20 }}>
+          <Card style={{ padding: 0, overflow: 'hidden' }}>
+            <View style={{ padding: 20, borderBottomWidth: 1, borderBottomColor: theme.colors.border }}>
+              <Typography variant="h3">{label || 'Select Option'}</Typography>
+            </View>
+            <ScrollView style={{ maxHeight: 400 }}>
+              {items.map((item, idx) => (
+                <TouchableOpacity 
+                  key={idx} 
+                  style={{ 
+                    padding: 18, 
+                    borderBottomWidth: idx === items.length - 1 ? 0 : 1, 
+                    borderBottomColor: theme.colors.border,
+                    backgroundColor: value === item.value ? theme.colors.acc + '10' : 'transparent'
+                  }}
+                  onPress={() => {
+                    onValueChange(item.value);
+                    setModalVisible(false);
+                  }}
+                >
+                  <Typography style={{ 
+                    color: value === item.value ? theme.colors.acc : theme.colors.t1,
+                    fontWeight: value === item.value ? '700' : '500',
+                    textAlign: 'center'
+                  }}>
+                    {item.label}
+                  </Typography>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity 
+              style={{ padding: 18, backgroundColor: theme.colors.card2, alignItems: 'center' }}
+              onPress={() => setModalVisible(false)}
+            >
+              <Typography style={{ fontWeight: '700', color: theme.colors.t3 }}>Cancel</Typography>
+            </TouchableOpacity>
+          </Card>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
 export function PremiumLoading({ message = "Loading content...", subtext = "Please wait while we prepare your experience" }) {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.bg, justifyContent: 'center', alignItems: 'center', padding: 40 }}>

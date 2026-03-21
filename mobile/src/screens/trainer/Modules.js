@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, TextInput, TouchableOpacity, RefreshControl, Modal, Alert } from 'react-native';
 import { theme } from '../../theme/theme';
-import { Typography, Card, Spacer, PremiumLoading, Button, ThemedModal } from '../../components/UI';
+import { Typography, Card, Spacer, PremiumLoading, Button, ThemedModal, ThemedPicker } from '../../components/UI';
 import { Search, Filter, Calendar, Users, Layers, ChevronRight, Video, Clock, Plus, BarChart2, Edit3, Trash2 } from 'lucide-react-native';
 import api from '../../api/api';
 import { useNavigation } from '@react-navigation/native';
 import RNPickerSelect from 'react-native-picker-select';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function TrainingModules() {
   const [modules, setModules] = useState([]);
@@ -28,6 +29,19 @@ export default function TrainingModules() {
   const [notice, setNotice] = useState(null);
   const [creatingMod, setCreatingMod] = useState(false);
   const [newModData, setNewModData] = useState({ title: '', description: '', category: 'General' });
+  const [showPicker, setShowPicker] = useState({ show: false, field: null, mode: 'date' });
+
+  const formatDateForBackend = (date) => {
+    if (!date) return '';
+    const pad = (n) => n.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+
+  const formatDateForDisplay = (str) => {
+    if (!str) return 'Select...';
+    const d = new Date(str.replace(' ', 'T'));
+    return d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+  };
 
   const navigation = useNavigation();
 
@@ -51,8 +65,8 @@ export default function TrainingModules() {
   const openSchedule = (mod) => {
     setSchedulingMod(mod);
     setScheduleData({
-      start_datetime: mod.start_datetime ? mod.start_datetime.slice(0, 16).replace('T', ' ') : '',
-      end_datetime: mod.end_datetime ? mod.end_datetime.slice(0, 16).replace('T', ' ') : '',
+      start_datetime: mod.start_datetime ? mod.start_datetime.slice(0, 16) : '',
+      end_datetime: mod.end_datetime ? mod.end_datetime.slice(0, 16) : '',
       meet_link: mod.meet_link || '',
       training_type: mod.training_type || 'virtual',
       status: mod.status || 'draft'
@@ -66,14 +80,10 @@ export default function TrainingModules() {
     }
     setSubmitting(true);
     try {
-      // Basic validation for ISO-like format YYYY-MM-DD HH:MM
-      const isoStart = scheduleData.start_datetime.replace(' ', 'T') + ":00";
-      const isoEnd = scheduleData.end_datetime.replace(' ', 'T') + ":00";
-      
       await api.post(`/api/trainer/module/${schedulingMod.id}/schedule`, {
         ...scheduleData,
-        start_datetime: isoStart,
-        end_datetime: isoEnd
+        start_datetime: scheduleData.start_datetime + ":00",
+        end_datetime: scheduleData.end_datetime + ":00"
       });
       setNotice({ title: 'Success', message: 'Module scheduled successfully!' });
       setSchedulingMod(null);
@@ -268,54 +278,54 @@ export default function TrainingModules() {
             <Typography variant="h2">Schedule Module</Typography>
             <Typography variant="caption" style={{ marginBottom: 20 }}>Setting availability for {schedulingMod?.title}</Typography>
             
-            <Typography variant="label">Start Time (YYYY-MM-DD HH:MM)</Typography>
-            <TextInput 
-              style={styles.modalInput}
-              value={scheduleData.start_datetime}
-              onChangeText={(t) => setScheduleData(prev => ({...prev, start_datetime: t}))}
-              placeholder="e.g. 2024-03-20 09:00"
-              placeholderTextColor={theme.colors.t4}
-            />
+            <Typography variant="label">Start Time</Typography>
+            <TouchableOpacity 
+              style={styles.modalInput} 
+              onPress={() => setShowPicker({ show: true, field: 'start_datetime', mode: 'date' })}
+            >
+              <View style={{ flex: 1, justifyContent: 'center' }}>
+                <Typography style={{ color: scheduleData.start_datetime ? '#fff' : theme.colors.t4, fontSize: 13 }}>
+                  {formatDateForDisplay(scheduleData.start_datetime)}
+                </Typography>
+              </View>
+            </TouchableOpacity>
 
-            <Typography variant="label">End Time (YYYY-MM-DD HH:MM)</Typography>
-            <TextInput 
-              style={styles.modalInput}
-              value={scheduleData.end_datetime}
-              onChangeText={(t) => setScheduleData(prev => ({...prev, end_datetime: t}))}
-              placeholder="e.g. 2024-03-20 18:00"
-              placeholderTextColor={theme.colors.t4}
-            />
+            <Typography variant="label">End Time</Typography>
+            <TouchableOpacity 
+              style={styles.modalInput} 
+              onPress={() => setShowPicker({ show: true, field: 'end_datetime', mode: 'date' })}
+            >
+              <View style={{ flex: 1, justifyContent: 'center' }}>
+                <Typography style={{ color: scheduleData.end_datetime ? '#fff' : theme.colors.t4, fontSize: 13 }}>
+                  {formatDateForDisplay(scheduleData.end_datetime)}
+                </Typography>
+              </View>
+            </TouchableOpacity>
 
             <View style={styles.row}>
               <View style={{ flex: 1 }}>
-                <Typography variant="label">Status</Typography>
-                <View style={styles.pickerContainer}>
-                  <RNPickerSelect
-                    onValueChange={(v) => setScheduleData(prev => ({...prev, status: v}))}
-                    value={scheduleData.status}
-                    items={[
-                      { label: 'Published', value: 'published' },
-                      { label: 'Draft', value: 'draft' }
-                    ]}
-                    style={{ inputIOS: styles.pickerInput, inputAndroid: styles.pickerInput, placeholder: { color: theme.colors.t4 } }}
-                  />
-                </View>
+                <ThemedPicker
+                  label="Status"
+                  value={scheduleData.status}
+                  onValueChange={(v) => setScheduleData(prev => ({...prev, status: v}))}
+                  items={[
+                    { label: 'Published', value: 'published' },
+                    { label: 'Draft', value: 'draft' }
+                  ]}
+                />
               </View>
               <Spacer w={12} />
               <View style={{ flex: 1 }}>
-                <Typography variant="label">Type</Typography>
-                <View style={styles.pickerContainer}>
-                  <RNPickerSelect
-                    onValueChange={(v) => setScheduleData(prev => ({...prev, training_type: v}))}
-                    value={scheduleData.training_type}
-                    items={[
-                      { label: 'Self-paced', value: 'self_paced' },
-                      { label: 'Virtual', value: 'virtual' },
-                      { label: 'Classroom', value: 'classroom' }
-                    ]}
-                    style={{ inputIOS: styles.pickerInput, inputAndroid: styles.pickerInput, placeholder: { color: theme.colors.t4 } }}
-                  />
-                </View>
+                <ThemedPicker
+                  label="Type"
+                  value={scheduleData.training_type}
+                  onValueChange={(v) => setScheduleData(prev => ({...prev, training_type: v}))}
+                  items={[
+                    { label: 'Self-paced', value: 'self_paced' },
+                    { label: 'Virtual', value: 'virtual' },
+                    { label: 'Classroom', value: 'classroom' }
+                  ]}
+                />
               </View>
             </View>
 
@@ -380,7 +390,31 @@ export default function TrainingModules() {
           onChangeText={(t) => setNewModData(prev => ({...prev, category: t}))}
         />
       </ThemedModal>
-    </View>
+
+      {showPicker.show && (
+      <DateTimePicker
+        value={scheduleData[showPicker.field] ? new Date(scheduleData[showPicker.field].replace(' ', 'T')) : new Date()}
+        mode={showPicker.mode}
+        is24Hour={true}
+        display="default"
+        onChange={(event, selectedDate) => {
+          if (event.type === 'dismissed') {
+            setShowPicker({ show: false, field: null, mode: 'date' });
+            return;
+          }
+          
+          const currentDate = selectedDate || new Date();
+          if (showPicker.mode === 'date') {
+            setShowPicker({ ...showPicker, mode: 'time' });
+            setScheduleData(f => ({ ...f, [showPicker.field]: formatDateForBackend(currentDate) }));
+          } else {
+            setShowPicker({ show: false, field: null, mode: 'date' });
+            setScheduleData(f => ({ ...f, [showPicker.field]: formatDateForBackend(currentDate) }));
+          }
+        }}
+      />
+    )}
+  </View>
   );
 }
 
