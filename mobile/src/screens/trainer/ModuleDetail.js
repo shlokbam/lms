@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert, TextInput } from 'react-native';
 import { theme } from '../../theme/theme';
 import { Typography, Card, Spacer, PremiumLoading, Button, ThemedModal } from '../../components/UI';
-import { ChevronLeft, Plus, Trash2, FileText, Video, Layers, Beaker, Calendar, Upload } from 'lucide-react-native';
+import { ChevronLeft, Plus, Trash2, FileText, Video, Layers, Beaker, Calendar, Upload, BarChart2 } from 'lucide-react-native';
 import api from '../../api/api';
 import * as DocumentPicker from 'expo-document-picker';
 import RNPickerSelect from 'react-native-picker-select';
@@ -28,6 +28,15 @@ export default function TrainerModuleDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [reportData, setReportData] = useState(null);
   const [selectedTestId, setSelectedTestId] = useState(null);
+  const [schedModal, setSchedModal] = useState(false);
+  const [schedForm, setSchedForm] = useState({ 
+    start_datetime: '', 
+    end_datetime: '', 
+    status: 'published', 
+    color: '#3B5BDB', 
+    training_type: 'self_paced', 
+    meet_link: '' 
+  });
 
   useEffect(() => {
     if (moduleId) {
@@ -100,7 +109,7 @@ export default function TrainerModuleDetail() {
     ]);
   };
 
-  const pickFile = async (chapterId = null) => {
+  const pickFile = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: ['*/*'],
@@ -109,18 +118,21 @@ export default function TrainerModuleDetail() {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const file = result.assets[0];
-        setUploadForm({
-          title: file.name,
-          phase: 'pre',
-          chapter_id: chapterId,
+        setUploadForm(f => ({
+          ...f,
+          title: f.title || file.name,
           file: file
-        });
-        setAddingMaterial(true);
+        }));
       }
     } catch (err) {
       console.error(err);
       alert("Error picking file");
     }
+  };
+
+  const openUploadModal = (chapterId = null) => {
+    setUploadForm({ title: '', phase: 'pre', chapter_id: chapterId, file: null });
+    setAddingMaterial(true);
   };
 
   const handleUpload = async () => {
@@ -178,6 +190,33 @@ export default function TrainerModuleDetail() {
     ]);
   };
 
+  const handleSaveSchedule = async () => {
+    setSubmitting(true);
+    try {
+      await api.post(`/api/trainer/module/${moduleId}/schedule`, schedForm);
+      setSchedModal(false);
+      fetchDetail();
+    } catch (e) {
+      alert("Failed to save schedule");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  useEffect(() => {
+    if (data?.module && schedModal) {
+      const m = data.module;
+      setSchedForm({
+        start_datetime: m.start_datetime ? m.start_datetime.slice(0, 16) : '',
+        end_datetime: m.end_datetime ? m.end_datetime.slice(0, 16) : '',
+        status: m.status || 'published',
+        color: m.color || '#3B5BDB',
+        training_type: m.training_type || 'self_paced',
+        meet_link: m.meet_link || ''
+      });
+    }
+  }, [schedModal, data]);
+
   if (loading || !data) return <PremiumLoading message="Opening Module Control..." />;
 
   const { module, chapters, mat_by_chapter, tests } = data;
@@ -216,15 +255,15 @@ export default function TrainerModuleDetail() {
           <>
             <View style={styles.sectionHeader}>
               <Typography variant="h2" style={{ marginBottom: 0, flex: 1 }}>Chapters</Typography>
-              <View style={{ flexDirection: 'row', gap: 6 }}>
-                <TouchableOpacity style={styles.headerActionBtn} onPress={() => setAddingChapter(true)}>
-                  <Plus size={18} color={theme.colors.acc} />
+              <View style={styles.headerActions}>
+                <TouchableOpacity style={styles.iconButton} onPress={() => setAddingChapter(true)}>
+                  <Plus size={20} color={theme.colors.acc} />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.headerActionBtn} onPress={() => pickFile()}>
-                  <Upload size={18} color={theme.colors.acc} />
+                <TouchableOpacity style={styles.iconButton} onPress={() => openUploadModal()}>
+                  <Upload size={20} color={theme.colors.acc} />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.headerActionBtn} onPress={() => navigation.navigate('ModuleReports', { moduleId })}>
-                  <Calendar size={18} color={theme.colors.acc} />
+                <TouchableOpacity style={styles.iconButton} onPress={() => setSchedModal(true)}>
+                  <Calendar size={20} color={theme.colors.acc} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -256,13 +295,32 @@ export default function TrainerModuleDetail() {
                         </TouchableOpacity>
                       </View>
                     ))}
-                    <TouchableOpacity style={styles.addMatBtn} onPress={() => pickFile(ch.id)}>
+                    <TouchableOpacity style={styles.addMatBtn} onPress={() => openUploadModal(ch.id)}>
                       <Plus size={14} color={theme.colors.acc} />
                       <Typography variant="small" style={{ color: theme.colors.acc, marginLeft: 4 }}>Add Material</Typography>
                     </TouchableOpacity>
                   </View>
                 </Card>
               ))
+            )}
+
+            {/* Uncategorized Materials */}
+            {mat_by_chapter["0"] && mat_by_chapter["0"].length > 0 && (
+              <>
+                <Spacer h={24} />
+                <Typography variant="h3" style={{ marginBottom: 12, color: theme.colors.t4 }}>Uncategorized Materials</Typography>
+                <Card style={{ padding: 8 }}>
+                   {mat_by_chapter["0"].map(mat => (
+                    <View key={mat.id} style={[styles.matItem, { paddingVertical: 8 }]}>
+                      {mat.file_type === 'video' ? <Video size={14} color={theme.colors.t3} /> : <FileText size={14} color={theme.colors.t3} />}
+                      <Typography variant="small" style={{ flex: 1, marginLeft: 12, color: theme.colors.t3 }}>{mat.title}</Typography>
+                      <TouchableOpacity onPress={() => deleteMaterial(null, mat.id)}>
+                        <Trash2 size={14} color={theme.colors.red} style={{ opacity: 0.6 }} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </Card>
+              </>
             )}
           </>
         )}
@@ -348,61 +406,160 @@ export default function TrainerModuleDetail() {
         <Spacer h={60} />
       </ScrollView>
 
+
       {/* Add Chapter Modal */}
-      <ThemedModal 
+      <ThemedModal
         visible={addingChapter}
-        title="New Chapter"
-        message="Enter a title for the new chapter."
+        onClose={() => setAddingChapter(false)}
+        title="Add Chapter"
         onConfirm={handleAddChapter}
-        onCancel={() => setAddingChapter(false)}
-        showCancel
+        confirmText={submitting ? "Adding..." : "Add Chapter"}
+        confirmDisabled={submitting || !newChapterTitle.trim()}
       >
-        <TextInput 
-          style={styles.modalInput}
-          placeholder="e.g. Introduction to Safety"
+        <Typography variant="label">Chapter Title *</Typography>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g., Introduction & Overview"
           placeholderTextColor={theme.colors.t4}
           value={newChapterTitle}
           onChangeText={setNewChapterTitle}
-          autoFocus
         />
       </ThemedModal>
 
       {/* Add Material Modal */}
-      <ThemedModal 
+      <ThemedModal
         visible={addingMaterial}
+        onClose={() => setAddingMaterial(false)}
         title="Upload Material"
-        message={`Uploading: ${uploadForm.file?.name}`}
         onConfirm={handleUpload}
-        onCancel={() => setAddingMaterial(false)}
-        showCancel
-        confirmText={submitting ? "Uploading..." : "Upload"}
+        confirmText={submitting ? "Uploading..." : "↑ Upload File"}
+        confirmDisabled={!uploadForm.file || submitting}
       >
-        <Typography variant="label" style={{ marginTop: 16 }}>Title</Typography>
-        <TextInput 
-          style={styles.modalInput}
-          placeholder="Material Title"
+        <Typography variant="label" style={{ fontSize: 10, fontWeight: '700', color: theme.colors.t4, textTransform: 'uppercase' }}>File *</Typography>
+        <TouchableOpacity 
+          style={[styles.webLikeFilePicker, uploadForm.file && styles.webLikeFilePickerActive]} 
+          onPress={pickFile}
+        >
+          <View style={styles.chooseFileBtn}>
+            <Typography style={{ color: '#000', fontSize: 12, fontWeight: '500' }}>Choose file</Typography>
+          </View>
+          <Typography variant="body" style={{ marginLeft: 10, color: uploadForm.file ? theme.colors.t1 : theme.colors.t4, flex: 1, fontSize: 13 }} numberOfLines={1}>
+            {uploadForm.file ? uploadForm.file.name : "No file chosen"}
+          </Typography>
+        </TouchableOpacity>
+
+        <Typography variant="label" style={{ marginTop: 16, fontSize: 10, fontWeight: '700', color: theme.colors.t4, textTransform: 'uppercase' }}>Title</Typography>
+        <TextInput
+          style={styles.webLikeInput}
+          placeholder="Display name (optional)"
           placeholderTextColor={theme.colors.t4}
           value={uploadForm.title}
-          onChangeText={(t) => setUploadForm(f => ({ ...f, title: t }))}
+          onChangeText={(v) => setUploadForm(f => ({ ...f, title: v }))}
         />
-        
-        <Typography variant="label" style={{ marginTop: 16 }}>Release Phase</Typography>
-        <View style={styles.pickerContainer}>
-          <RNPickerSelect
-            onValueChange={(v) => setUploadForm(f => ({ ...f, phase: v }))}
-            value={uploadForm.phase}
-            items={[
-              { label: 'Pre-Session', value: 'pre' },
-              { label: 'During Session', value: 'live' },
-              { label: 'Post-Session', value: 'post' }
-            ]}
-            style={{
-              inputIOS: styles.pickerInput,
-              inputAndroid: styles.pickerInput,
-              placeholder: { color: theme.colors.t4 }
-            }}
-          />
+
+        <View style={{ flexDirection: 'row', gap: 16, marginTop: 16 }}>
+          <View style={{ flex: 1 }}>
+            <Typography variant="label" style={{ fontSize: 10, fontWeight: '700', color: theme.colors.t4, textTransform: 'uppercase', marginBottom: 8 }}>Release Phase</Typography>
+            <View style={styles.webLikePicker}>
+              <RNPickerSelect
+                onValueChange={(v) => setUploadForm(f => ({ ...f, phase: v }))}
+                value={uploadForm.phase}
+                items={[
+                  { label: 'Pre-Session', value: 'pre' },
+                  { label: 'During Session', value: 'live' },
+                  { label: 'Post-Session', value: 'post' }
+                ]}
+                style={{ inputIOS: styles.pickerInput, inputAndroid: styles.pickerInput, placeholder: { color: theme.colors.t4 } }}
+              />
+            </View>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Typography variant="label" style={{ fontSize: 10, fontWeight: '700', color: theme.colors.t4, textTransform: 'uppercase', marginBottom: 8 }}>Chapter</Typography>
+            <View style={styles.webLikePicker}>
+              <RNPickerSelect
+                onValueChange={(v) => setUploadForm(f => ({ ...f, chapter_id: v }))}
+                value={uploadForm.chapter_id}
+                placeholder={{ label: 'None', value: null }}
+                items={chapters.map(ch => ({ label: ch.title, value: ch.id }))}
+                style={{ inputIOS: styles.pickerInput, inputAndroid: styles.pickerInput, placeholder: { color: theme.colors.t4 } }}
+              />
+            </View>
+          </View>
         </View>
+      </ThemedModal>
+
+      {/* Schedule Modal */}
+      <ThemedModal
+        visible={schedModal}
+        onClose={() => setSchedModal(false)}
+        title="Schedule Module"
+        onConfirm={handleSaveSchedule}
+        confirmText={submitting ? "Saving..." : "Save Schedule"}
+      >
+        <View style={{ flexDirection: 'row', gap: 16 }}>
+          <View style={{ flex: 1 }}>
+            <Typography variant="label">Start Date & Time</Typography>
+            <TextInput
+              style={styles.webLikeInput}
+              placeholder="YYYY-MM-DDTHH:MM"
+              value={schedForm.start_datetime}
+              onChangeText={(v) => setSchedForm(f => ({ ...f, start_datetime: v }))}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Typography variant="label">End Date & Time</Typography>
+            <TextInput
+              style={styles.webLikeInput}
+              placeholder="YYYY-MM-DDTHH:MM"
+              value={schedForm.end_datetime}
+              onChangeText={(v) => setSchedForm(f => ({ ...f, end_datetime: v }))}
+            />
+          </View>
+        </View>
+
+        <View style={{ flexDirection: 'row', gap: 16, marginTop: 16 }}>
+          <View style={{ flex: 1 }}>
+            <Typography variant="label">Status</Typography>
+            <View style={styles.webLikePicker}>
+              <RNPickerSelect
+                onValueChange={(v) => setSchedForm(f => ({ ...f, status: v }))}
+                value={schedForm.status}
+                items={[
+                  { label: 'Published', value: 'published' },
+                  { label: 'Draft', value: 'draft' }
+                ]}
+                style={{ inputIOS: styles.pickerInput, inputAndroid: styles.pickerInput }}
+              />
+            </View>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Typography variant="label">Type</Typography>
+            <View style={styles.webLikePicker}>
+              <RNPickerSelect
+                onValueChange={(v) => setSchedForm(f => ({ ...f, training_type: v }))}
+                value={schedForm.training_type}
+                items={[
+                  { label: 'Self-paced', value: 'self_paced' },
+                  { label: 'Virtual', value: 'virtual' },
+                  { label: 'Classroom', value: 'classroom' }
+                ]}
+                style={{ inputIOS: styles.pickerInput, inputAndroid: styles.pickerInput }}
+              />
+            </View>
+          </View>
+        </View>
+
+        {schedForm.training_type !== 'self_paced' && (
+          <View style={{ marginTop: 16 }}>
+            <Typography variant="label">Meeting Link / Location</Typography>
+            <TextInput
+              style={styles.webLikeInput}
+              placeholder="URL or Address"
+              value={schedForm.meet_link}
+              onChangeText={(v) => setSchedForm(f => ({ ...f, meet_link: v }))}
+            />
+          </View>
+        )}
       </ThemedModal>
     </View>
   );
@@ -471,9 +628,68 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   pickerInput: {
-    color: theme.colors.t1,
+    fontSize: 14,
+    paddingVertical: 12,
     paddingHorizontal: 12,
-    fontSize: 16,
-    height: 48,
+    color: '#fff',
+  },
+  webLikeFilePicker: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.card2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    marginTop: 8,
+    height: 42,
+    overflow: 'hidden',
+  },
+  webLikeFilePickerActive: {
+    borderColor: theme.colors.acc,
+  },
+  chooseFileBtn: {
+    backgroundColor: '#efefef',
+    height: '100%',
+    paddingHorizontal: 12,
+    justifyContent: 'center',
+    borderRightWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  webLikeInput: {
+    backgroundColor: theme.colors.card2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    color: '#fff',
+    paddingHorizontal: 12,
+    height: 42,
+    marginTop: 8,
+    fontSize: 14,
+  },
+  webLikePicker: {
+    backgroundColor: theme.colors.card2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    marginTop: 0,
+    height: 42,
+    justifyContent: 'center',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 0
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8
+  },
+  iconButton: {
+    padding: 8,
+    backgroundColor: theme.colors.card2,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.border
   }
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, TouchableOpacity, StyleSheet, View, ActivityIndicator } from 'react-native';
+import { Text, TouchableOpacity, StyleSheet, View, ActivityIndicator, ScrollView } from 'react-native';
 import { theme } from '../theme/theme';
 
 const styles = StyleSheet.create({
@@ -99,7 +99,12 @@ export function Button({ title, onPress, variant = 'primary', icon, style, textS
   return (
     <TouchableOpacity 
       activeOpacity={0.7} 
-      style={[styles.btnBase, getButtonStyle(), style]} 
+      style={[
+        styles.btnBase, 
+        getButtonStyle(), 
+        style,
+        props.disabled && { opacity: 0.5 }
+      ]} 
       onPress={onPress}
       {...props}
     >
@@ -119,20 +124,50 @@ export function Card({ children, style, padding = true }) {
   );
 }
 
-export function ThemedModal({ visible, title, message, onConfirm, confirmText = "OK" }) {
+export function ThemedModal({ visible, title, message, onConfirm, onClose, confirmText = "OK", confirmDisabled = false, children }) {
   if (!visible) return null;
   return (
-    <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', padding: 30, zIndex: 9999 }]}>
-      <Card style={{ alignItems: 'center', padding: 30 }}>
-        {title && <Typography variant="h2" style={{ textAlign: 'center', marginBottom: 12 }}>{title}</Typography>}
-        <Typography style={{ textAlign: 'center', color: theme.colors.t2, marginBottom: 24, lineHeight: 22 }}>
-          {message}
-        </Typography>
-        <Button 
-          title={confirmText} 
-          onPress={onConfirm} 
-          style={{ width: '100%' }}
-        />
+    <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', padding: 20, zIndex: 9999 }]}>
+      <Card style={{ padding: 24, maxHeight: '90%' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <Typography variant="h2" style={{ marginBottom: 0 }}>{title}</Typography>
+          {onClose && (
+            <TouchableOpacity onPress={onClose} style={{ padding: 4 }}>
+              <Text style={{ color: theme.colors.t3, fontSize: 20 }}>✕</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {message && (
+          <Typography style={{ color: theme.colors.t2, marginBottom: 20, lineHeight: 20 }}>
+            {message}
+          </Typography>
+        )}
+
+        {children && (
+          <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator={false}>
+            <View style={{ marginBottom: 24 }}>
+              {children}
+            </View>
+          </ScrollView>
+        )}
+        
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          {onClose && (
+            <Button 
+              title="Cancel" 
+              variant="secondary"
+              onPress={onClose} 
+              style={{ flex: 1 }}
+            />
+          )}
+          <Button 
+            title={confirmText} 
+            onPress={onConfirm} 
+            disabled={confirmDisabled}
+            style={{ flex: 2 }}
+          />
+        </View>
       </Card>
     </View>
   );
