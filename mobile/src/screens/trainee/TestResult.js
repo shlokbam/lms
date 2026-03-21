@@ -19,7 +19,7 @@ export default function TestResult({ route, navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate('Dashboard')} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => navigation.navigate('Main')} style={styles.backBtn}>
           <ChevronLeft size={24} color={theme.colors.t1} />
         </TouchableOpacity>
         <Typography variant="h3" style={{ marginBottom: 0 }}>Test Result</Typography>
@@ -72,7 +72,7 @@ export default function TestResult({ route, navigation }) {
         <Button 
           title="Go to Dashboard" 
           variant="outline"
-          onPress={() => navigation.navigate('Dashboard')}
+          onPress={() => navigation.navigate('Main')}
           icon={ArrowRight}
         />
       </ScrollView>

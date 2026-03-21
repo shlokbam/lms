@@ -2,8 +2,18 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
 
-// Set this to your local machine's IP address if testing on a physical device
-const BASE_URL = 'http://192.168.29.250:8000'; 
+import { Platform } from 'react-native';
+
+const debuggerHost = Constants.expoConfig?.hostUri;
+let localhost = debuggerHost ? debuggerHost.split(':')[0] : 'localhost';
+
+// Android Emulators need 10.0.2.2 to access host machine's localhost
+if (Platform.OS === 'android' && localhost === 'localhost') {
+  localhost = '10.0.2.2';
+}
+
+export const BASE_URL = `http://${localhost}:8000`;
+console.log('[API] Using BASE_URL:', BASE_URL);
 
 const api = axios.create({
   baseURL: BASE_URL,

@@ -16,30 +16,40 @@ export const AuthProvider = ({ children }) => {
     try {
       const token = await SecureStore.getItemAsync('token');
       if (token) {
-        // Optionally fetch profile to verify token
-        const res = await api.get('/api/trainee/dashboard').catch(() => null);
-        if (res) {
-          // Typically the dashboard would return user info or we fetch it from /profile
-          const profile = await api.get('/api/trainee/profile').catch(() => null);
-          if (profile) setUser(profile.data.user);
+        // Fetch current user details role-agnostically
+        const res = await api.get('/api/auth/me').catch(() => null);
+        if (res && res.data) {
+          setUser(res.data);
         } else {
           await SecureStore.deleteItemAsync('token');
         }
       }
     } catch (e) {
-      console.error(e);
+      console.error("Auth check error:", e);
     } finally {
       setLoading(false);
     }
   };
 
   const login = async (email, password) => {
-    const res = await api.post('/api/auth/login', { email, password });
-    const { access_token } = res.data;
-    await SecureStore.setItemAsync('token', access_token);
-    // Fetch profile after login
-    const profile = await api.get('/api/trainee/profile');
-    setUser(profile.data.user);
+    try {
+      console.log('[Auth] Attempting login for:', email);
+      const res = await api.post('/api/auth/login', { email, password });
+      console.log('[Auth] Login success');
+      const { access_token } = res.data;
+      await SecureStore.setItemAsync('token', access_token);
+      const profile = await api.get('/api/auth/me');
+      setUser(profile.data);
+    } catch (e) {
+      console.error('[Auth] Login error details:', {
+        status: e.response?.status,
+        data: e.response?.data,
+        message: e.message,
+        url: e.config?.url,
+        baseURL: e.config?.baseURL
+      });
+      throw e;
+    }
   };
 
   const logout = async () => {

@@ -64,6 +64,11 @@ class ModuleOut(BaseModel):
     created_at: Optional[datetime]
     class Config: from_attributes = True
 
+class ModuleCreate(BaseModel):
+    title: str
+    description: Optional[str] = ""
+    category: Optional[str] = "General"
+
 class ScheduleRequest(BaseModel):
     start_datetime: str
     end_datetime: str

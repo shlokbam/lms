@@ -36,7 +36,8 @@ To run the full Eagle LMS stack, follow these steps:
 ```bash
 cd backend
 pip install -r requirements.txt
-python main.py
+uvicorn main:app --reload --port 8000 -
+-host 0.0.0.0
 ```
 *Runs on `http://localhost:8000`*
 

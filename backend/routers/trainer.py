@@ -81,6 +81,23 @@ def list_modules(db: Session = Depends(get_db), trainer: models.User = Depends(r
     return {"modules": [schemas.ModuleOut.from_orm(m) for m in modules], "mod_stats": mod_stats, "now": now.isoformat()}
 
 
+@router.post("/module/create", response_model=schemas.ModuleOut)
+def create_module(body: schemas.ModuleCreate, db: Session = Depends(get_db), trainer: models.User = Depends(require_trainer)):
+    new_mod = models.Module(
+        title=body.title,
+        description=body.description,
+        category=body.category,
+        trainer_id=trainer.id,
+        status="draft",
+        training_type="self_paced",
+        is_default=False
+    )
+    db.add(new_mod)
+    db.commit()
+    db.refresh(new_mod)
+    return new_mod
+
+
 # ─── Module detail ────────────────────────────────────────────────────────────
 @router.get("/module/{module_id}")
 def module_detail(module_id: int, db: Session = Depends(get_db), trainer: models.User = Depends(require_trainer)):

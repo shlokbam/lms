@@ -13,10 +13,10 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as SecureStore from 'expo-secure-store';
 import { theme } from '../../theme/theme';
-import { Typography, ThemedModal, PremiumLoading } from '../../components/UI';
+import { Typography, Button, ThemedModal, PremiumLoading } from '../../components/UI';
 import { Spacer } from '../../components/Form';
 import { ChevronLeft, ExternalLink, Download, CheckCircle } from 'lucide-react-native';
-import api from '../../api/api';
+import api, { BASE_URL } from '../../api/api';
 
 const { width } = Dimensions.get('window');
 
@@ -44,7 +44,7 @@ export default function DocumentViewer({ route, navigation }) {
   };
 
   const fileUrl = token
-    ? `http://192.168.29.250:8000/uploads/${material.file_path}?token=${token}`
+    ? `${BASE_URL}/uploads/${material.file_path}?token=${token}`
     : null;
 
   const handleMarkAsCompleted = async () => {
