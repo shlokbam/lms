@@ -28,6 +28,12 @@ import {
   Info
 } from 'lucide-react-native';
 
+const PHASE_ORDER = { pre: 1, live: 2, post: 3, upcoming: 0 };
+
+function canAccess(matPhase, modulePhase) {
+  return PHASE_ORDER[matPhase] <= PHASE_ORDER[modulePhase];
+}
+
 export default function ModuleDetail({ route, navigation }) {
   const { moduleId } = route.params;
   const [data, setData] = useState(null);
@@ -64,20 +70,30 @@ export default function ModuleDetail({ route, navigation }) {
 
   const MaterialRow = ({ mat }) => {
     const isDone = data.progress_map[mat.id]?.completed;
+    const accessible = canAccess(mat.release_phase, data.phase);
     const Icon = mat.file_type === 'video' ? PlayCircle : FileText;
 
     return (
       <TouchableOpacity 
-        style={styles.matRow} 
-        activeOpacity={0.7}
-        onPress={() => navigation.navigate('DocumentViewer', { material: mat, moduleId: moduleId })}
+        style={[styles.matRow, !accessible && { opacity: 0.5 }]} 
+        activeOpacity={accessible ? 0.7 : 1}
+        onPress={() => accessible ? navigation.navigate('DocumentViewer', { material: mat, moduleId: moduleId }) : null}
       >
-        <View style={[styles.matIcon, { backgroundColor: isDone ? theme.colors.greenBg : theme.colors.card2 }]}>
-          <Icon size={18} color={isDone ? theme.colors.green : theme.colors.t3} />
+        <View style={[styles.matIcon, { backgroundColor: (accessible && isDone) ? theme.colors.greenBg : theme.colors.card2 }]}>
+          <Icon size={18} color={accessible ? (isDone ? theme.colors.green : theme.colors.acc) : theme.colors.t4} />
         </View>
         <View style={{ flex: 1 }}>
-          <Typography variant="body" style={isDone && { color: theme.colors.t3 }}>{mat.title}</Typography>
-          <Typography variant="small" style={{ textTransform: 'uppercase' }}>{mat.file_type}</Typography>
+          <Typography variant="body" style={(!accessible || isDone) && { color: theme.colors.t3 }}>{mat.title}</Typography>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+             <View style={[styles.miniBadge, { backgroundColor: accessible ? theme.colors.acc + '20' : theme.colors.card2 }]}>
+                <Typography variant="small" style={{ fontSize: 9, color: accessible ? theme.colors.acc : theme.colors.t4, fontWeight: '700' }}>
+                  {mat.release_phase.toUpperCase()}
+                </Typography>
+             </View>
+             {!accessible && (
+               <Typography variant="small" style={{ color: theme.colors.t4, fontSize: 10 }}>Locked: available in {mat.release_phase} phase</Typography>
+             )}
+          </View>
         </View>
         {isDone && <CheckCircle2 size={16} color={theme.colors.green} />}
       </TouchableOpacity>
@@ -101,17 +117,39 @@ export default function ModuleDetail({ route, navigation }) {
       statusText = isPassed ? "Passed" : "Attempted";
       statusColor = isPassed ? theme.colors.green : theme.colors.red;
       isLocked = attData.count >= test.max_attempts; 
-    } else if (start && now < start) {
-      statusText = "Scheduled";
-      statusColor = theme.colors.amber;
-      isLocked = true;
-    } else if (end && now > end) {
-      statusText = "Closed";
-      statusColor = theme.colors.red;
-      isLocked = true;
     } else {
-      statusText = "Open now";
-      statusColor = theme.colors.green;
+      // Hierarchical check first
+      const modPhase = data.phase; // pre, live, post
+      let phaseAllowed = false;
+      let phaseMessage = "";
+
+      if (test.test_type === 'pre') {
+        phaseAllowed = (modPhase === 'pre' || modPhase === 'live');
+        phaseMessage = "Available during Pre-session";
+      } else if (test.test_type === 'mid') {
+        phaseAllowed = (modPhase === 'live');
+        phaseMessage = "Available during Live session";
+      } else if (test.test_type === 'post') {
+        phaseAllowed = (modPhase === 'live' || modPhase === 'post');
+        phaseMessage = "Available after session starts";
+      }
+
+      if (!phaseAllowed) {
+        statusText = "Locked";
+        statusColor = theme.colors.t4;
+        isLocked = true;
+      } else if (start && now < start) {
+        statusText = "Scheduled";
+        statusColor = theme.colors.amber;
+        isLocked = true;
+      } else if (end && now > end) {
+        statusText = "Closed";
+        statusColor = theme.colors.red;
+        isLocked = true;
+      } else {
+        statusText = "Open now";
+        statusColor = theme.colors.green;
+      }
     }
 
     const fmtTime = (d) => d ? new Date(d).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '—';
@@ -444,6 +482,11 @@ const styles = StyleSheet.create({
     gap: 12,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border + '15',
+  },
+  miniBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
   matIcon: {
     width: 36,

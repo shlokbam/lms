@@ -5,7 +5,6 @@ import { Typography, Card, Spacer, PremiumLoading, Button, ThemedModal, ThemedPi
 import { ChevronLeft, Plus, Trash2, FileText, Video, Layers, Beaker, Calendar, Upload, BarChart2 } from 'lucide-react-native';
 import api from '../../api/api';
 import * as DocumentPicker from 'expo-document-picker';
-import RNPickerSelect from 'react-native-picker-select';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
@@ -38,6 +37,7 @@ export default function TrainerModuleDetail() {
     meet_link: '' 
   });
   const [showPicker, setShowPicker] = useState({ show: false, field: null, mode: 'date' });
+  const [reportData, setReportData] = useState(null);
 
   const formatDateForBackend = (date) => {
     if (!date) return '';
@@ -84,6 +84,14 @@ export default function TrainerModuleDetail() {
       setLoading(true);
       const res = await api.get(`/api/trainer/module/${moduleId}`);
       setData(res.data);
+      
+      // Also fetch reports if available
+      try {
+        const repRes = await api.get(`/api/trainer/module/${moduleId}/reports`);
+        setReportData(repRes.data);
+      } catch (err) {
+        console.log("No reports or failed to load reports:", err.message);
+      }
     } catch (e) {
       console.error(e);
       alert("Failed to load module details");
@@ -373,7 +381,10 @@ export default function TrainerModuleDetail() {
 
         {activeTab === 'reports' && (
           <>
-            <Typography variant="h2">Test Performance</Typography>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <BarChart2 size={24} color={theme.colors.green} />
+              <Typography variant="h2" style={{ marginBottom: 0 }}>Test Performance</Typography>
+            </View>
             {reportData?.tests?.length > 1 && (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 12 }}>
                 {reportData.tests.map(t => (
@@ -454,7 +465,7 @@ export default function TrainerModuleDetail() {
           onPress={pickFile}
         >
           <View style={styles.chooseFileBtn}>
-            <Typography style={{ color: '#000', fontSize: 12, fontWeight: '500' }}>Choose file</Typography>
+            <Typography style={{ color: theme.colors.t2, fontSize: 13, fontWeight: '700' }}>Choose file</Typography>
           </View>
           <Typography variant="body" style={{ marginLeft: 10, color: uploadForm.file ? theme.colors.t1 : theme.colors.t4, flex: 1, fontSize: 13 }} numberOfLines={1}>
             {uploadForm.file ? uploadForm.file.name : "No file chosen"}
@@ -472,19 +483,16 @@ export default function TrainerModuleDetail() {
 
         <View style={{ flexDirection: 'row', gap: 16, marginTop: 16 }}>
           <View style={{ flex: 1 }}>
-            <Typography variant="label" style={{ fontSize: 10, fontWeight: '700', color: theme.colors.t4, textTransform: 'uppercase', marginBottom: 8 }}>Release Phase</Typography>
-            <View style={styles.webLikePicker}>
-              <RNPickerSelect
-                onValueChange={(v) => setUploadForm(f => ({ ...f, phase: v }))}
-                value={uploadForm.phase}
-                items={[
-                  { label: 'Pre-Session', value: 'pre' },
-                  { label: 'During Session', value: 'live' },
-                  { label: 'Post-Session', value: 'post' }
-                ]}
-                style={{ inputIOS: styles.pickerInput, inputAndroid: styles.pickerInput, placeholder: { color: theme.colors.t4 } }}
-              />
-            </View>
+            <ThemedPicker
+              label="Release Phase"
+              value={uploadForm.phase}
+              onValueChange={(v) => setUploadForm(f => ({ ...f, phase: v }))}
+              items={[
+                { label: 'Pre-Session', value: 'pre' },
+                { label: 'During Session', value: 'live' },
+                { label: 'Post-Session', value: 'post' }
+              ]}
+            />
           </View>
           <View style={{ flex: 1 }}>
             <ThemedPicker
@@ -652,64 +660,19 @@ const styles = StyleSheet.create({
     marginTop: 16,
     width: '100%',
     borderWidth: 1,
-    borderColor: theme.colors.border
-  },
-  pickerContainer: {
-    backgroundColor: theme.colors.card2,
-    borderRadius: 10,
-    marginTop: 8,
-    borderWidth: 1,
     borderColor: theme.colors.border,
-    height: 48,
-    justifyContent: 'center'
-  },
-  pickerInput: {
-    fontSize: 14,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    color: '#fff',
-  },
-  webLikeFilePicker: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.card2,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    marginTop: 8,
-    height: 42,
-    overflow: 'hidden',
-  },
-  webLikeFilePickerActive: {
-    borderColor: theme.colors.acc,
-  },
-  chooseFileBtn: {
-    backgroundColor: '#efefef',
-    height: '100%',
-    paddingHorizontal: 12,
-    justifyContent: 'center',
-    borderRightWidth: 1,
-    borderColor: theme.colors.border,
+    fontSize: 15
   },
   webLikeInput: {
     backgroundColor: theme.colors.card2,
     borderRadius: 6,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    color: '#fff',
+    color: theme.colors.t1, 
     paddingHorizontal: 12,
     height: 42,
     marginTop: 8,
     fontSize: 14,
-  },
-  webLikePicker: {
-    backgroundColor: theme.colors.card2,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    marginTop: 0,
-    height: 42,
-    justifyContent: 'center',
   },
   sectionHeader: {
     flexDirection: 'row',

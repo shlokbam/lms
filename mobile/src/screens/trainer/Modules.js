@@ -5,7 +5,6 @@ import { Typography, Card, Spacer, PremiumLoading, Button, ThemedModal, ThemedPi
 import { Search, Filter, Calendar, Users, Layers, ChevronRight, Video, Clock, Plus, BarChart2, Edit3, Trash2 } from 'lucide-react-native';
 import api from '../../api/api';
 import { useNavigation } from '@react-navigation/native';
-import RNPickerSelect from 'react-native-picker-select';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function TrainingModules() {
@@ -185,13 +184,23 @@ export default function TrainingModules() {
           </View>
         ) : (
           filteredModules.map(mod => {
-            const status = getStatus(mod.start_datetime, mod.end_datetime);
             const formatDate = (dateStr) => {
               if (!dateStr) return '';
               const d = new Date(dateStr);
               return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + 
                      d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
             };
+
+            const getStatus = () => {
+              const now = new Date();
+              const start = mod.start_datetime ? new Date(mod.start_datetime) : null;
+              const end = mod.end_datetime ? new Date(mod.end_datetime) : null;
+              
+              if (start && now < start) return { label: 'Upcoming', color: theme.colors.amber };
+              if (end && now > end) return { label: 'Ended', color: theme.colors.red };
+              return { label: 'Live', color: theme.colors.green };
+            };
+            const status = getStatus();
 
             return (
               <Card key={mod.id} style={styles.modCard}>
@@ -236,16 +245,13 @@ export default function TrainingModules() {
 
                 <View style={styles.actionRow}>
                   <TouchableOpacity style={styles.actionBtn} onPress={() => openSchedule(mod)}>
-                    <Calendar size={16} color={theme.colors.acc} />
-                    <Typography variant="small" style={{ color: theme.colors.acc, marginLeft: 6, fontWeight: '700' }}>Schedule</Typography>
+                    <Calendar size={20} color={theme.colors.acc} />
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('ModuleReports', { moduleId: mod.id })}>
-                    <BarChart2 size={16} color={theme.colors.green} />
-                    <Typography variant="small" style={{ color: theme.colors.green, marginLeft: 6, fontWeight: '700' }}>Reports</Typography>
+                    <BarChart2 size={20} color={theme.colors.green} />
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('ModuleDetail', { moduleId: mod.id })}>
-                    <Edit3 size={16} color={theme.colors.info} />
-                    <Typography variant="small" style={{ color: theme.colors.info, marginLeft: 6, fontWeight: '700' }}>Edit</Typography>
+                    <Edit3 size={20} color={theme.colors.sky} />
                   </TouchableOpacity>
                   <TouchableOpacity 
                     style={[styles.actionBtn, { borderRightWidth: 0 }]} 
@@ -261,7 +267,7 @@ export default function TrainingModules() {
                       ]);
                     }}
                   >
-                    <Trash2 size={16} color={theme.colors.red} />
+                    <Trash2 size={20} color={theme.colors.red} />
                   </TouchableOpacity>
                 </View>
               </Card>
@@ -272,80 +278,78 @@ export default function TrainingModules() {
       </ScrollView>
 
       {/* Scheduling Modal */}
-      <Modal visible={!!schedulingMod} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <Card style={styles.modalCard}>
-            <Typography variant="h2">Schedule Module</Typography>
-            <Typography variant="caption" style={{ marginBottom: 20 }}>Setting availability for {schedulingMod?.title}</Typography>
-            
-            <Typography variant="label">Start Time</Typography>
-            <TouchableOpacity 
-              style={styles.modalInput} 
-              onPress={() => setShowPicker({ show: true, field: 'start_datetime', mode: 'date' })}
-            >
-              <View style={{ flex: 1, justifyContent: 'center' }}>
-                <Typography style={{ color: scheduleData.start_datetime ? '#fff' : theme.colors.t4, fontSize: 13 }}>
-                  {formatDateForDisplay(scheduleData.start_datetime)}
-                </Typography>
-              </View>
-            </TouchableOpacity>
+      <ThemedModal
+        visible={!!schedulingMod}
+        onClose={() => setSchedulingMod(null)}
+        title="Schedule Module"
+        confirmText={submitting ? "Saving..." : "Save"}
+        onConfirm={handleSchedule}
+        confirmDisabled={submitting}
+      >
+        <Typography variant="caption" style={{ marginBottom: 20 }}>
+          Setting availability for {schedulingMod?.title}
+        </Typography>
+        
+        <Typography variant="label">Start Time</Typography>
+        <TouchableOpacity 
+          style={styles.modalInput} 
+          onPress={() => setShowPicker({ show: true, field: 'start_datetime', mode: 'date' })}
+        >
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <Typography style={{ color: scheduleData.start_datetime ? '#fff' : theme.colors.t4, fontSize: 13 }}>
+              {formatDateForDisplay(scheduleData.start_datetime)}
+            </Typography>
+          </View>
+        </TouchableOpacity>
 
-            <Typography variant="label">End Time</Typography>
-            <TouchableOpacity 
-              style={styles.modalInput} 
-              onPress={() => setShowPicker({ show: true, field: 'end_datetime', mode: 'date' })}
-            >
-              <View style={{ flex: 1, justifyContent: 'center' }}>
-                <Typography style={{ color: scheduleData.end_datetime ? '#fff' : theme.colors.t4, fontSize: 13 }}>
-                  {formatDateForDisplay(scheduleData.end_datetime)}
-                </Typography>
-              </View>
-            </TouchableOpacity>
+        <Typography variant="label">End Time</Typography>
+        <TouchableOpacity 
+          style={styles.modalInput} 
+          onPress={() => setShowPicker({ show: true, field: 'end_datetime', mode: 'date' })}
+        >
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <Typography style={{ color: scheduleData.end_datetime ? '#fff' : theme.colors.t4, fontSize: 13 }}>
+              {formatDateForDisplay(scheduleData.end_datetime)}
+            </Typography>
+          </View>
+        </TouchableOpacity>
 
-            <View style={styles.row}>
-              <View style={{ flex: 1 }}>
-                <ThemedPicker
-                  label="Status"
-                  value={scheduleData.status}
-                  onValueChange={(v) => setScheduleData(prev => ({...prev, status: v}))}
-                  items={[
-                    { label: 'Published', value: 'published' },
-                    { label: 'Draft', value: 'draft' }
-                  ]}
-                />
-              </View>
-              <Spacer w={12} />
-              <View style={{ flex: 1 }}>
-                <ThemedPicker
-                  label="Type"
-                  value={scheduleData.training_type}
-                  onValueChange={(v) => setScheduleData(prev => ({...prev, training_type: v}))}
-                  items={[
-                    { label: 'Self-paced', value: 'self_paced' },
-                    { label: 'Virtual', value: 'virtual' },
-                    { label: 'Classroom', value: 'classroom' }
-                  ]}
-                />
-              </View>
-            </View>
-
-            <Typography variant="label">Meeting Link (Opt)</Typography>
-            <TextInput 
-              style={styles.modalInput}
-              value={scheduleData.meet_link}
-              onChangeText={(t) => setScheduleData(prev => ({...prev, meet_link: t}))}
-              placeholder="https://meet.google.com/..."
-              placeholderTextColor={theme.colors.t4}
+        <View style={styles.row}>
+          <View style={{ flex: 1 }}>
+            <ThemedPicker
+              label="Status"
+              value={scheduleData.status}
+              onValueChange={(v) => setScheduleData(prev => ({...prev, status: v}))}
+              items={[
+                { label: 'Published', value: 'published' },
+                { label: 'Draft', value: 'draft' }
+              ]}
             />
-
-            <Spacer h={20} />
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <Button title="Cancel" variant="ghost" style={{ flex: 1 }} onPress={() => setSchedulingMod(null)} />
-              <Button title={submitting ? "Saving..." : "Save"} style={{ flex: 1 }} onPress={handleSchedule} disabled={submitting} />
-            </View>
-          </Card>
+          </View>
+          <Spacer w={12} />
+          <View style={{ flex: 1 }}>
+            <ThemedPicker
+              label="Type"
+              value={scheduleData.training_type}
+              onValueChange={(v) => setScheduleData(prev => ({...prev, training_type: v}))}
+              items={[
+                { label: 'Self-paced', value: 'self_paced' },
+                { label: 'Virtual', value: 'virtual' },
+                { label: 'Classroom', value: 'classroom' }
+              ]}
+            />
+          </View>
         </View>
-      </Modal>
+
+        <Typography variant="label">Meeting Link (Opt)</Typography>
+        <TextInput 
+          style={styles.modalInput}
+          value={scheduleData.meet_link}
+          onChangeText={(t) => setScheduleData(prev => ({...prev, meet_link: t}))}
+          placeholder="https://meet.google.com/..."
+          placeholderTextColor={theme.colors.t4}
+        />
+      </ThemedModal>
 
       <ThemedModal 
         visible={!!notice}
@@ -360,8 +364,7 @@ export default function TrainingModules() {
         title="Create New Module"
         message="Enter the details for the new training module."
         onConfirm={handleCreateModule}
-        onCancel={() => setCreatingMod(false)}
-        showCancel
+        onClose={() => setCreatingMod(false)}
         confirmText={submitting ? "Creating..." : "Create"}
       >
         <Typography variant="label" style={{ marginTop: 16 }}>Title *</Typography>
@@ -491,21 +494,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRightWidth: 1,
     borderRightColor: theme.colors.border
-  },
-  pickerContainer: {
-    backgroundColor: theme.colors.card2,
-    borderRadius: 10,
-    marginTop: 4,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    height: 44,
-    justifyContent: 'center'
-  },
-  pickerInput: {
-    color: theme.colors.t1,
-    paddingHorizontal: 12,
-    fontSize: 14,
-    height: 44,
   },
   row: { flexDirection: 'row', alignItems: 'center' }
 });

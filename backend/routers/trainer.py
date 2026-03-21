@@ -95,6 +95,13 @@ def create_module(body: schemas.ModuleCreate, db: Session = Depends(get_db), tra
     db.add(new_mod)
     db.commit()
     db.refresh(new_mod)
+
+    # Enroll selected trainees
+    if body.trainee_ids:
+        for tid in body.trainee_ids:
+            db.add(models.Enrollment(module_id=new_mod.id, trainee_id=tid))
+        db.commit()
+
     return new_mod
 
 

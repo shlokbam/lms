@@ -5,7 +5,6 @@ import { Typography, Card, Spacer, PremiumLoading, Button, ThemedPicker } from '
 import { ChevronLeft, Plus, Trash2, Clock, Calendar, CheckSquare, Save } from 'lucide-react-native';
 import api from '../../api/api';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import RNPickerSelect from 'react-native-picker-select';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function CreateEditTest() {
@@ -353,16 +352,6 @@ const styles = StyleSheet.create({
     fontSize: 15
   },
   row: { flexDirection: 'row', alignItems: 'center' },
-  pickerContainer: {
-    backgroundColor: theme.colors.card2,
-    borderRadius: 10,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    height: 48,
-    justifyContent: 'center'
-  },
-  pickerInput: { color: theme.colors.t1, paddingHorizontal: 12, fontSize: 15, height: 48 },
   qCard: { padding: 16, marginBottom: 16 },
   qBadge: { width: 32, height: 32, borderRadius: 16, backgroundColor: theme.colors.acc, alignItems: 'center', justifyContent: 'center' },
   optionsGrid: { gap: 8 },

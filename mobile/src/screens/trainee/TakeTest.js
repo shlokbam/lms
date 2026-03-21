@@ -135,7 +135,11 @@ export default function TakeTest({ route, navigation }) {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scroll} 
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.questionContainer}>
           <Typography variant="h2" style={styles.qText}>{data.questions[currentIndex].question_text}</Typography>
           
@@ -166,6 +170,7 @@ export default function TakeTest({ route, navigation }) {
             })}
           </View>
         </View>
+        <Spacer h={100} /> 
       </ScrollView>
 
       <View style={styles.footer}>
@@ -291,7 +296,8 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingHorizontal: 24,
-    paddingBottom: 120,
+    paddingTop: 10,
+    flexGrow: 1,
   },
   questionContainer: {
     marginTop: 10,

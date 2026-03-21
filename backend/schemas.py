@@ -68,6 +68,7 @@ class ModuleCreate(BaseModel):
     title: str
     description: Optional[str] = ""
     category: Optional[str] = "General"
+    trainee_ids: Optional[List[int]] = []
 
 class ScheduleRequest(BaseModel):
     start_datetime: str

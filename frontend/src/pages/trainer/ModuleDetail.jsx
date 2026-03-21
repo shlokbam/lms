@@ -129,7 +129,7 @@ export default function TrainerModuleDetail() {
           </div>
           <div style={{ display:'flex', gap:8, flexShrink:0, flexWrap:'wrap' }}>
             <button className="btn btn-gold btn-sm" onClick={openSched}>Schedule</button>
-            <Link to={`/trainer/module/${moduleId}/reports`} className="btn btn-secondary btn-sm">PPT Reports</Link>
+            <Link to={`/trainer/module/${moduleId}/reports`} className="btn btn-gold btn-sm">Reports</Link>
             <Link to={`/trainer/module/${moduleId}/test/create`} className="btn btn-gold btn-sm">+ New Test</Link>
             <button className="btn btn-primary btn-sm" onClick={()=>setAddChModal(true)}>+ Chapter</button>
             <button className="btn btn-primary btn-sm" onClick={()=>setUploadModal(true)}>↑ Upload</button>

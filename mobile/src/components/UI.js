@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, TouchableOpacity, StyleSheet, View, ActivityIndicator, ScrollView } from 'react-native';
+import { Text, TouchableOpacity, StyleSheet, View, ActivityIndicator, ScrollView, Modal } from 'react-native';
 import { theme } from '../theme/theme';
 
 const styles = StyleSheet.create({

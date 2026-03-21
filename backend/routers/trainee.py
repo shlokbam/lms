@@ -19,10 +19,10 @@ PHASE_ORDER = {"pre": 1, "live": 2, "post": 3}
 def _get_phase(module) -> str:
     now = datetime.now()
     if not module.start_datetime:
-        return "upcoming"
+        return "pre"  # Default to pre if no start date
     if now < module.start_datetime:
         return "pre"
-    if module.end_datetime and now <= module.end_datetime:
+    if not module.end_datetime or now <= module.end_datetime:
         return "live"
     return "post"
 
@@ -125,9 +125,22 @@ def get_test_for_trainee(test_id: int, db: Session = Depends(get_db), current_us
         raise HTTPException(404)
     now = datetime.now()
     if test.start_datetime and now < test.start_datetime:
-        raise HTTPException(403, "Test not started yet")
+        raise HTTPException(403, "Test not started yet according to schedule")
     if test.end_datetime and now > test.end_datetime:
         raise HTTPException(403, "Test window closed")
+    
+    # Hierarchical Module Phase Check
+    module = db.query(models.Module).filter_by(id=test.module_id).first()
+    mod_phase = _get_phase(module)
+    if test.test_type == "pre":
+        if mod_phase not in ["pre", "live"]:
+            raise HTTPException(403, "Pre-test is only available before or during live session")
+    elif test.test_type == "mid":
+        if mod_phase != "live":
+            raise HTTPException(403, "Mid-session test is only available when module is Live")
+    elif test.test_type == "post":
+        if mod_phase not in ["live", "post"]:
+            raise HTTPException(403, "Post-session test is only available after module starts")
     existing = db.query(models.TestAttempt).filter_by(test_id=test_id, trainee_id=current_user.id).count()
     if existing >= test.max_attempts:
         raise HTTPException(403, "All attempts used")
@@ -157,7 +170,8 @@ def submit_test(test_id: int, body: schemas.SubmitTestRequest,
     att = models.TestAttempt(
         test_id=test_id, trainee_id=current_user.id,
         score=score, total_marks=total, percentage=pct, passed=passed,
-        answers=json.dumps(answers_dict), submitted_at=now
+        answers=json.dumps(answers_dict),
+        submitted_at=datetime.now()
     )
     db.add(att); db.commit(); db.refresh(att)
     return {
