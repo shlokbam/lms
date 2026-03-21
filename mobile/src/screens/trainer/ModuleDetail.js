@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert, TextInput } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert, TextInput, Text } from 'react-native';
 import { theme } from '../../theme/theme';
 import { Typography, Card, Spacer, PremiumLoading, Button, ThemedModal, ThemedPicker } from '../../components/UI';
 import { ChevronLeft, Plus, Trash2, FileText, Video, Layers, Beaker, Calendar, Upload, BarChart2 } from 'lucide-react-native';
@@ -249,8 +249,12 @@ export default function TrainerModuleDetail() {
           <ChevronLeft size={28} color={theme.colors.t1} />
         </TouchableOpacity>
         <View style={{ flex: 1, marginLeft: 16 }}>
-          <Typography variant="h2" numberOfLines={1} style={{ marginBottom: 0 }}>{module.title}</Typography>
-          <Typography variant="caption" style={{ color: theme.colors.acc }}>Trainer Control Panel</Typography>
+          <Typography variant="h2" numberOfLines={1} style={{ marginBottom: 0 }}>
+            <Text>{module.title}</Text>
+          </Typography>
+          <Typography variant="caption" style={{ color: theme.colors.acc }}>
+            <Text>Trainer Control Panel</Text>
+          </Typography>
         </View>
       </View>
 
@@ -299,7 +303,9 @@ export default function TrainerModuleDetail() {
                 <Card key={ch.id} style={styles.chapterCard}>
                   <View style={styles.row}>
                     <Layers size={18} color={theme.colors.acc} />
-                    <Typography variant="h3" style={{ flex: 1, marginLeft: 12, marginBottom: 0 }}>{ch.title}</Typography>
+                    <Typography variant="h3" style={{ flex: 1, marginLeft: 12, marginBottom: 0 }}>
+                      <Text>{ch.title}</Text>
+                    </Typography>
                     <TouchableOpacity onPress={() => deleteChapter(ch.id)}>
                       <Trash2 size={18} color={theme.colors.red} style={{ opacity: 0.7 }} />
                     </TouchableOpacity>
@@ -310,7 +316,9 @@ export default function TrainerModuleDetail() {
                     {(mat_by_chapter[ch.id] || []).map(mat => (
                       <View key={mat.id} style={styles.matItem}>
                         {mat.file_type === 'video' ? <Video size={14} color={theme.colors.t3} /> : <FileText size={14} color={theme.colors.t3} />}
-                        <Typography variant="small" style={{ flex: 1, marginLeft: 8, color: theme.colors.t3 }}>{mat.title}</Typography>
+                        <Typography variant="small" style={{ flex: 1, marginLeft: 8, color: theme.colors.t3 }}>
+                          <Text>{mat.title}</Text>
+                        </Typography>
                         <TouchableOpacity onPress={() => deleteMaterial(ch.id, mat.id)}>
                           <Trash2 size={14} color={theme.colors.t4} />
                         </TouchableOpacity>
@@ -406,11 +414,15 @@ export default function TrainerModuleDetail() {
               <Card key={i} style={styles.enrolleeCard}>
                 <View style={styles.row}>
                   <View style={styles.avatar}>
-                    <Typography style={{ color: '#fff', fontWeight: 'bold' }}>{rep.trainee_name[0]}</Typography>
+                    <Text style={{ color: '#fff', fontWeight: 'bold' }}>{rep.trainee_name[0]}</Text>
                   </View>
                   <View style={{ flex: 1, marginLeft: 12 }}>
-                    <Typography variant="body" style={{ fontWeight: '700' }}>{rep.trainee_name}</Typography>
-                    <Typography variant="small" style={{ color: theme.colors.t4 }}>{rep.score !== null ? `Score: ${rep.score}/${rep.total_marks}` : 'No attempt'}</Typography>
+                    <Typography variant="body" style={{ fontWeight: '700' }}>
+                      <Text>{rep.trainee_name}</Text>
+                    </Typography>
+                    <Typography variant="small" style={{ color: theme.colors.t4 }}>
+                      <Text>{rep.score !== null ? `Score: ${rep.score}/${rep.total_marks}` : 'No attempt'}</Text>
+                    </Typography>
                   </View>
                   <View style={[styles.badge, { backgroundColor: rep.passed ? theme.colors.green + '20' : (rep.score !== null ? theme.colors.red + '20' : theme.colors.card2) }]}>
                     <Typography variant="small" style={{ color: rep.passed ? theme.colors.green : (rep.score !== null ? theme.colors.red : theme.colors.t4), fontSize: 10 }}>

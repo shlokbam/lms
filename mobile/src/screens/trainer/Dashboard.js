@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Text } from 'react-native';
 import { theme } from '../../theme/theme';
 import { Typography, Card, Spacer, PremiumLoading } from '../../components/UI';
 import { LayoutDashboard, Users, BookOpen, Zap, Clock, ChevronRight, Bell } from 'lucide-react-native';
@@ -36,8 +36,12 @@ export default function TrainerDashboard() {
         <Icon size={20} color={color} />
       </View>
       <Spacer h={12} />
-      <Typography variant="h1" style={{ marginBottom: 0 }}>{value}</Typography>
-      <Typography variant="small" style={{ color: theme.colors.t3 }}>{title}</Typography>
+      <Typography variant="h1" style={{ marginBottom: 0 }}>
+        <Text>{value}</Text>
+      </Typography>
+      <Typography variant="small" style={{ color: theme.colors.t3 }}>
+        <Text>{title}</Text>
+      </Typography>
     </Card>
   );
 
@@ -45,8 +49,12 @@ export default function TrainerDashboard() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View>
-          <Typography variant="caption" style={{ color: theme.colors.acc }}>Trainer Pro Dashboard</Typography>
-          <Typography variant="h1" style={{ marginBottom: 0 }}>Overview</Typography>
+          <Typography variant="caption" style={{ color: theme.colors.acc }}>
+            <Text>Trainer Pro Dashboard</Text>
+          </Typography>
+          <Typography variant="h1" style={{ marginBottom: 0 }}>
+            <Text>Overview</Text>
+          </Typography>
         </View>
         <TouchableOpacity style={styles.notifyBtn}>
           <Bell size={22} color={theme.colors.t1} />
@@ -78,19 +86,27 @@ export default function TrainerDashboard() {
         <Spacer h={12} />
         {data.recent.length === 0 ? (
           <Card style={styles.emptyCard}>
-            <Typography variant="caption" style={{ textAlign: 'center' }}>No recent activity found.</Typography>
+            <Typography variant="caption" style={{ textAlign: 'center' }}>
+              <Text>No recent activity found.</Text>
+            </Typography>
           </Card>
         ) : (
           data.recent.map((item, i) => (
             <Card key={i} style={styles.activityCard}>
               <View style={styles.avatar}>
-                <Typography style={{ color: '#fff', fontWeight: 'bold' }}>{item.name[0]}</Typography>
+                <Text style={{ color: '#fff', fontWeight: 'bold' }}>{item.name[0]}</Text>
               </View>
               <View style={{ flex: 1, marginLeft: 12 }}>
-                <Typography variant="body" style={{ fontWeight: '700' }}>{item.name}</Typography>
-                <Typography variant="small" style={{ color: theme.colors.t3 }}>Enrolled in {item.title}</Typography>
+                <Typography variant="body" style={{ fontWeight: '700' }}>
+                  <Text>{item.name}</Text>
+                </Typography>
+                <Typography variant="small" style={{ color: theme.colors.t3 }}>
+                  <Text>Enrolled in {item.title}</Text>
+                </Typography>
               </View>
-              <Typography variant="small" style={{ color: theme.colors.t4 }}>{item.enrolled_at.slice(5, 10)}</Typography>
+              <Typography variant="small" style={{ color: theme.colors.t4 }}>
+                <Text>{item.enrolled_at.slice(5, 10)}</Text>
+              </Typography>
             </Card>
           ))
         )}
@@ -108,12 +124,16 @@ export default function TrainerDashboard() {
         {data.modules.slice(0, 3).map((mod, i) => (
           <Card key={mod.id} style={styles.moduleSummaryCard}>
             <View style={{ flex: 1 }}>
-              <Typography variant="h3" numberOfLines={1}>{mod.title}</Typography>
+              <Typography variant="h3" numberOfLines={1}>
+                <Text>{mod.title}</Text>
+              </Typography>
               <View style={styles.modMeta}>
-                <Typography variant="small" style={{ color: theme.colors.t3 }}>{data.mod_stats[mod.id]?.total || 0} Trainees</Typography>
+                <Typography variant="small" style={{ color: theme.colors.t3 }}>
+                  <Text>{data.mod_stats[mod.id]?.total || 0} Trainees</Text>
+                </Typography>
                 <View style={styles.dot} />
                 <Typography variant="small" style={{ color: mod.status === 'published' ? theme.colors.green : theme.colors.t4 }}>
-                  {mod.status.toUpperCase()}
+                  <Text>{mod.status.toUpperCase()}</Text>
                 </Typography>
               </View>
             </View>

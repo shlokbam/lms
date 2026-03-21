@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, TextInput, TouchableOpacity, RefreshControl, Modal, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, TextInput, TouchableOpacity, RefreshControl, Modal, Alert, Text } from 'react-native';
 import { theme } from '../../theme/theme';
 import { Typography, Card, Spacer, PremiumLoading, Button, ThemedModal, ThemedPicker } from '../../components/UI';
 import { Search, Filter, Calendar, Users, Layers, ChevronRight, Video, Clock, Plus, BarChart2, Edit3, Trash2 } from 'lucide-react-native';
@@ -27,7 +27,9 @@ export default function TrainingModules() {
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState(null);
   const [creatingMod, setCreatingMod] = useState(false);
-  const [newModData, setNewModData] = useState({ title: '', description: '', category: 'General' });
+  const [newModData, setNewModData] = useState({ title: '', description: '', category: 'General', trainee_ids: [] });
+  const [traineeList, setTraineeList] = useState([]);
+  const [traineeSearch, setTraineeSearch] = useState('');
   const [showPicker, setShowPicker] = useState({ show: false, field: null, mode: 'date' });
 
   const formatDateForBackend = (date) => {
@@ -53,6 +55,9 @@ export default function TrainingModules() {
       const res = await api.get('/api/trainer/modules');
       setModules(res.data.modules);
       setStats(res.data.mod_stats);
+      
+      const tRes = await api.get('/api/trainer/trainees');
+      setTraineeList(tRes.data);
     } catch (e) {
       console.error(e);
     } finally {
@@ -98,21 +103,25 @@ export default function TrainingModules() {
     if (!newModData.title.trim()) return;
     setSubmitting(true);
     try {
-      // Since there's no dedicated create endpoint in trainer.py based on my audit,
-      // I'll assume we might need a generic one or one that follows the pattern.
-      // Wait, let me check if I should implement the backend endpoint first if it's missing.
-      // Actually, I'll check trainer.py again to be 100% sure.
-      
       await api.post('/api/trainer/module/create', newModData);
       setCreatingMod(false);
-      setNewModData({ title: '', description: '', category: 'General' });
+      setNewModData({ title: '', description: '', category: 'General', trainee_ids: [] });
       fetchModules();
-      setNotice({ title: 'Success', message: 'Module created successfully!' });
+      setNotice({ title: 'Success', message: 'Module created and trainees enrolled!' });
     } catch (e) {
       alert(e.response?.data?.detail || "Failed to create module");
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const toggleTrainee = (id) => {
+    setNewModData(prev => {
+      const ids = prev.trainee_ids.includes(id) 
+        ? prev.trainee_ids.filter(x => x !== id)
+        : [...prev.trainee_ids, id]
+      return { ...prev, trainee_ids: ids }
+    });
   };
 
   const getStatus = (start, end) => {
@@ -392,6 +401,73 @@ export default function TrainingModules() {
           value={newModData.category}
           onChangeText={(t) => setNewModData(prev => ({...prev, category: t}))}
         />
+
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, marginBottom: 8 }}>
+          <Typography variant="label" style={{ marginBottom: 0 }}>Enroll Trainees ({newModData.trainee_ids.length})</Typography>
+          <TouchableOpacity onPress={() => {
+            const allIds = traineeList.map(t => t.id);
+            setNewModData(p => ({ ...p, trainee_ids: p.trainee_ids.length === allIds.length ? [] : allIds }));
+          }}>
+            <Typography variant="small" style={{ color: theme.colors.acc, fontWeight: '700' }}>
+              {newModData.trainee_ids.length === traineeList.length ? 'DESELECT ALL' : 'SELECT ALL'}
+            </Typography>
+          </TouchableOpacity>
+        </View>
+
+        <View style={[styles.searchContainer, { height: 40, marginBottom: 12, backgroundColor: theme.colors.card2 }]}>
+          <Search size={14} color={theme.colors.t4} />
+          <TextInput 
+            style={[styles.searchInput, { fontSize: 13 }]} 
+            placeholder="Search trainees..." 
+            placeholderTextColor={theme.colors.t4}
+            value={traineeSearch}
+            onChangeText={setTraineeSearch}
+          />
+        </View>
+
+        <View style={{ maxHeight: 250, backgroundColor: theme.colors.card2, borderRadius: 12, padding: 8, marginBottom: 16 }}>
+          {traineeList.filter(t => t.name.toLowerCase().includes(traineeSearch.toLowerCase()) || (t.department && t.department.toLowerCase().includes(traineeSearch.toLowerCase()))).map(t => {
+            const isSelected = newModData.trainee_ids.includes(t.id);
+            return (
+              <TouchableOpacity 
+                key={t.id} 
+                onPress={() => toggleTrainee(t.id)}
+                style={{ 
+                  flexDirection: 'row', 
+                  alignItems: 'center', 
+                  paddingVertical: 10, 
+                  paddingHorizontal: 8,
+                  borderRadius: 8,
+                  backgroundColor: isSelected ? theme.colors.acc + '15' : 'transparent',
+                  marginBottom: 4
+                }}
+              >
+                <View style={{ 
+                  width: 20, height: 20, borderRadius: 6, borderWidth: 2, 
+                  borderColor: isSelected ? theme.colors.acc : theme.colors.t4,
+                  backgroundColor: isSelected ? theme.colors.acc : 'transparent',
+                  alignItems: 'center', justifyContent: 'center'
+                }}>
+                  {isSelected && <Text style={{ color: '#fff', fontSize: 10, fontWeight: '900' }}>✓</Text>}
+                </View>
+                <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: theme.colors.card, alignItems: 'center', justifyContent: 'center', marginLeft: 12 }}>
+                   <Typography style={{ fontSize: 12, fontWeight: '700', color: theme.colors.t2 }}><Text>{t.name[0]}</Text></Typography>
+                </View>
+                <View style={{ marginLeft: 12, flex: 1 }}>
+                  <Typography variant="body" style={{ fontWeight: isSelected ? '700' : '500', color: isSelected ? theme.colors.acc : theme.colors.t1 }}>
+                    <Text style={{ fontSize: 14 }}>{t.name}</Text>
+                  </Typography>
+                  <Typography variant="small" style={{ color: theme.colors.t4 }}>
+                    <Text style={{ fontSize: 11 }}>{t.department || 'N/A'}</Text>
+                  </Typography>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+          {traineeList.length === 0 && (
+             <Typography variant="small" style={{ textAlign: 'center', padding: 20, color: theme.colors.t4 }}><Text>No trainees available</Text></Typography>
+          )}
+        </View>
       </ThemedModal>
 
       {showPicker.show && (

@@ -20,8 +20,14 @@ export default function TrainerModules() {
   const [saving, setSaving] = useState(false)
   const now = new Date()
 
+  const [createModal, setCreateModal] = useState(false)
+  const [traineeList, setTraineeList] = useState([])
+  const [newMod, setNewMod] = useState({ title: '', description: '', category: 'General', trainee_ids: [] })
+  const [traineeSearch, setTraineeSearch] = useState('')
+
   useEffect(() => {
     load()
+    client.get('/api/trainer/trainees').then(r => setTraineeList(r.data)).catch(() => {})
     document.getElementById('page-title') && (document.getElementById('page-title').textContent = 'All Modules')
   }, [])
 
@@ -50,6 +56,26 @@ export default function TrainerModules() {
     await client.delete(`/api/trainer/module/${id}`); load()
   }
 
+  async function createModule() {
+    if (!newMod.title.trim()) return
+    setSaving(true)
+    try {
+      await client.post('/api/trainer/module/create', newMod)
+      setCreateModal(false)
+      setNewMod({ title: '', description: '', category: 'General', trainee_ids: [] })
+      load()
+    } catch {} finally { setSaving(false) }
+  }
+
+  function toggleTrainee(id) {
+    setNewMod(prev => {
+      const ids = prev.trainee_ids.includes(id) 
+        ? prev.trainee_ids.filter(x => x !== id)
+        : [...prev.trainee_ids, id]
+      return { ...prev, trainee_ids: ids }
+    })
+  }
+
   function getPhase(m) {
     if (!m.start_datetime) return 'draft'
     const s = new Date(m.start_datetime), e = m.end_datetime ? new Date(m.end_datetime) : null
@@ -74,11 +100,15 @@ export default function TrainerModules() {
     return !search || m.title.toLowerCase().includes(search.toLowerCase())
   })
 
+  if (!data) return <div className="anim-fade" style={{ padding: 40, textAlign: 'center', color: 'var(--t3)' }}>Loading modules…</div>
+
   return (
     <>
       <div className="sh anim-up" style={{ marginBottom: 16 }}>
         <div><div className="sh-title">Training Modules</div><div className="sh-sub">{modules.length} modules total</div></div>
-        <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center' }}>
+        <div style={{ display:'flex', gap:10, flexWrap:'wrap', alignItems:'center' }}>
+          <button className="btn btn-sm btn-secondary" style={{ borderColor:'var(--acc)', color:'var(--acc)' }} onClick={() => setCreateModal(true)}>+ New Module</button>
+          <div style={{ width:1, height:24, background:'var(--border)', margin:'0 8px' }} />
           <input className="form-input" placeholder="Search…" value={search} onChange={e=>setSearch(e.target.value)}
             style={{ width:180, height:36, padding:'0 10px', fontSize:13 }} />
           {['all','live','upcoming','ended'].map(f => (
@@ -97,7 +127,7 @@ export default function TrainerModules() {
 
       <div className="mod-grid">
         {filtered.map(m => {
-          const stats = data.mod_stats?.[m.id] || {}
+          const stats = data?.mod_stats?.[m.id] || {}
           return (
             <div key={m.id} className="mod-card anim-up">
               <div className="mc-body">
@@ -132,54 +162,77 @@ export default function TrainerModules() {
         )}
       </div>
 
-      {/* Schedule Modal */}
-      {modal && (
-        <div className="modal-bg open" onClick={e=>e.target===e.currentTarget&&setModal(null)}>
-          <div className="modal" onClick={e=>e.stopPropagation()}>
-            <button className="modal-close" onClick={()=>setModal(null)}>✕</button>
-            <div className="modal-title">Schedule Module</div>
-            <div className="modal-sub">{modal.title}</div>
+      {/* Create Module Modal */}
+      {createModal && (
+        <div className="modal-bg open" onClick={e=>e.target===e.currentTarget&&setCreateModal(false)}>
+          <div className="modal" onClick={e=>e.stopPropagation()} style={{ maxWidth: 550 }}>
+            <button className="modal-close" onClick={()=>setCreateModal(false)}>✕</button>
+            <div className="modal-title">Create New Module</div>
+            
             <div className="g2">
               <div className="form-group">
-                <label className="form-label">Start Date & Time</label>
-                <input className="form-input" type="datetime-local" value={schedForm.start_datetime}
-                  onChange={e=>setSchedForm(f=>({...f,start_datetime:e.target.value}))} />
+                <label className="form-label">Title *</label>
+                <input className="form-input" value={newMod.title} onChange={e=>setNewMod({...newMod, title: e.target.value})} placeholder="e.g. Technical Safety" />
               </div>
               <div className="form-group">
-                <label className="form-label">End Date & Time</label>
-                <input className="form-input" type="datetime-local" value={schedForm.end_datetime}
-                  onChange={e=>setSchedForm(f=>({...f,end_datetime:e.target.value}))} />
+                <label className="form-label">Category</label>
+                <input className="form-input" value={newMod.category} onChange={e=>setNewMod({...newMod, category: e.target.value})} placeholder="e.g. Safety" />
               </div>
             </div>
-            <div className="g2">
-              <div className="form-group">
-                <label className="form-label">Status</label>
-                <select className="form-select" value={schedForm.status} onChange={e=>setSchedForm(f=>({...f,status:e.target.value}))}>
-                  <option value="published">Published</option>
-                  <option value="draft">Draft</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Training Type</label>
-                <select className="form-select" value={schedForm.training_type} onChange={e=>setSchedForm(f=>({...f,training_type:e.target.value}))}>
-                  <option value="self_paced">Self-paced</option>
-                  <option value="virtual">Virtual</option>
-                  <option value="classroom">Classroom</option>
-                </select>
-              </div>
-            </div>
-            {schedForm.training_type !== 'self_paced' && (
-              <div className="form-group">
-                <label className="form-label">Meeting Link / Location</label>
-                <input className="form-input" placeholder="https://meet.google.com/..." value={schedForm.meet_link || ''}
-                  onChange={e=>setSchedForm(f=>({...f,meet_link:e.target.value}))} />
-              </div>
-            )}
-            <div className="form-group">
 
+            <div className="form-group" style={{ marginBottom: 16 }}>
+              <label className="form-label">Description</label>
+              <textarea className="form-input" value={newMod.description} onChange={e=>setNewMod({...newMod, description: e.target.value})} style={{ height: 80, resize: 'none' }} placeholder="Module outcomes..." />
             </div>
-            <button className="btn btn-gold btn-md w-full" style={{ justifyContent:'center' }} onClick={saveSchedule} disabled={saving}>
-              {saving ? 'Saving…' : 'Save Schedule'}
+
+            <div className="form-group">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <label className="form-label" style={{ marginBottom: 0 }}>Select Trainees ({newMod.trainee_ids.length})</label>
+                <button className="btn btn-ghost btn-xs" style={{ padding: '0 4px', color: 'var(--acc)', fontWeight: 600 }} onClick={() => {
+                  const allIds = traineeList.map(t => t.id)
+                  setNewMod(p => ({ ...p, trainee_ids: p.trainee_ids.length === allIds.length ? [] : allIds }))
+                }}>
+                  {newMod.trainee_ids.length === traineeList.length ? 'Deselect All' : 'Select All'}
+                </button>
+              </div>
+              
+              <input 
+                className="form-input mb-2" 
+                placeholder="Search trainees..." 
+                style={{ height: 32, fontSize:12 }}
+                value={traineeSearch}
+                onChange={e => setTraineeSearch(e.target.value)}
+              />
+
+              <div className="card" style={{ maxHeight: 180, overflow: 'auto', padding: 0, background: 'var(--card2)' }}>
+                {traineeList.filter(t => t.name.toLowerCase().includes(traineeSearch.toLowerCase()) || t.department?.toLowerCase().includes(traineeSearch.toLowerCase())).length === 0 ? (
+                  <div style={{ padding: 24, textAlign: 'center', fontSize: 13, color: 'var(--t3)' }}>No trainees found</div>
+                ) : traineeList.filter(t => t.name.toLowerCase().includes(traineeSearch.toLowerCase()) || t.department?.toLowerCase().includes(traineeSearch.toLowerCase())).map(t => (
+                  <div 
+                    key={t.id} 
+                    className={`flex items-c gap-3 pointer transition-all`} 
+                    style={{ 
+                      padding: '8px 12px', 
+                      borderBottom: '1px solid var(--border)',
+                      background: newMod.trainee_ids.includes(t.id) ? 'var(--acc-bg)' : 'transparent'
+                    }}
+                    onClick={() => toggleTrainee(t.id)}
+                  >
+                    <div style={{ width:16, height:16, border:'2px solid var(--acc)', borderRadius:4, background: newMod.trainee_ids.includes(t.id) ? 'var(--acc)' : 'transparent', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:11 }}>
+                      {newMod.trainee_ids.includes(t.id) && '✓'}
+                    </div>
+                    <div className="ava ava-sm" style={{ width:28, height:28, background: 'var(--border)', fontSize: 11 }}>{t.name[0]}</div>
+                    <div className="flex-1">
+                      <div style={{ fontSize: 13, fontWeight: 700, color: newMod.trainee_ids.includes(t.id) ? 'var(--acc)' : 'var(--t1)' }}>{t.name}</div>
+                      <div className="t-xs t-muted">{t.department || 'N/A'}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <button className="btn btn-gold btn-md w-full" style={{ justifyContent:'center', marginTop: 12, height: 44 }} onClick={createModule} disabled={saving}>
+              {saving ? 'Creating…' : 'Create Module & Enroll Trainees'}
             </button>
           </div>
         </div>

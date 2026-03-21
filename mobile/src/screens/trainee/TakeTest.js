@@ -5,7 +5,8 @@ import {
   ScrollView, 
   TouchableOpacity,
   ActivityIndicator,
-  Alert
+  Alert,
+  Text
 } from 'react-native';
 import { theme } from '../../theme/theme';
 import { Typography, Card, Button, ThemedModal, PremiumLoading } from '../../components/UI';
@@ -123,7 +124,10 @@ export default function TakeTest({ route, navigation }) {
       <View style={styles.progressSection}>
         <View style={styles.progTextRow}>
           <Typography variant="h3" style={styles.progCounter}>
-            {String(currentIndex + 1).padStart(2, '0')}<Typography variant="body" style={{ color: theme.colors.t4 }}>/{String(data.questions.length).padStart(2, '0')}</Typography>
+            <Text>{String(currentIndex + 1).padStart(2, '0')}</Text>
+            <Text style={{ color: theme.colors.t4 }}>
+              /{String(data.questions.length).padStart(2, '0')}
+            </Text>
           </Typography>
           <View style={styles.pointsBadge}>
             <Award size={14} color={theme.colors.acc} />
@@ -135,43 +139,45 @@ export default function TakeTest({ route, navigation }) {
         </View>
       </View>
 
-      <ScrollView 
-        style={{ flex: 1 }}
-        contentContainerStyle={styles.scroll} 
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.questionContainer}>
-          <Typography variant="h2" style={styles.qText}>{data.questions[currentIndex].question_text}</Typography>
-          
-          <View style={styles.optionsList}>
-            {['a', 'b', 'c', 'd'].map((opt, i) => {
-              const label = opt.toUpperCase();
-              const isSelected = answers[data.questions[currentIndex].id] === label;
-              const optVal = data.questions[currentIndex][`option_${opt}`];
-              if (!optVal) return null;
+      <View style={{ flex: 1, marginBottom: 100 }}>
+        <ScrollView 
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.scroll} 
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.questionContainer}>
+            <Typography variant="h2" style={styles.qText}>{data.questions[currentIndex].question_text}</Typography>
+            
+            <View style={styles.optionsList}>
+              {['a', 'b', 'c', 'd'].map((opt, i) => {
+                const label = opt.toUpperCase();
+                const isSelected = answers[data.questions[currentIndex].id] === label;
+                const optVal = data.questions[currentIndex][`option_${opt}`];
+                if (!optVal) return null;
 
-              return (
-                <TouchableOpacity 
-                  key={opt}
-                  style={[styles.optBtn, isSelected && styles.optBtnActive]}
-                  onPress={() => handleSelect(data.questions[currentIndex].id, label)}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.optKey, isSelected && styles.optKeyActive]}>
-                    <Typography style={[styles.optKeyText, isSelected && styles.optKeyTextActive]}>
-                      {label}
+                return (
+                  <TouchableOpacity 
+                    key={opt}
+                    style={[styles.optBtn, isSelected && styles.optBtnActive]}
+                    onPress={() => handleSelect(data.questions[currentIndex].id, label)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.optKey, isSelected && styles.optKeyActive]}>
+                      <Typography style={[styles.optKeyText, isSelected && styles.optKeyTextActive]}>
+                        {label}
+                      </Typography>
+                    </View>
+                    <Typography style={[styles.optValText, isSelected && styles.optValTextActive]}>
+                      {optVal}
                     </Typography>
-                  </View>
-                  <Typography style={[styles.optValText, isSelected && styles.optValTextActive]}>
-                    {optVal}
-                  </Typography>
-                </TouchableOpacity>
-              );
-            })}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
-        </View>
-        <Spacer h={100} /> 
-      </ScrollView>
+          <Spacer h={40} /> 
+        </ScrollView>
+      </View>
 
       <View style={styles.footer}>
         <View style={styles.timerBox}>
@@ -222,6 +228,7 @@ export default function TakeTest({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: theme.colors.bg },
   header: {
     paddingTop: 60,
     paddingBottom: 20,
