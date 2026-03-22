@@ -26,6 +26,7 @@ export default function TrainingModules() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
   const [creatingMod, setCreatingMod] = useState(false);
   const [newModData, setNewModData] = useState({ title: '', description: '', category: 'General', trainee_ids: [] });
   const [traineeList, setTraineeList] = useState([]);
@@ -476,6 +477,18 @@ export default function TrainingModules() {
         title={notice?.title}
         message={notice?.message}
         onConfirm={() => setNotice(null)}
+      />
+
+      <ThemedModal
+        visible={!!confirmModal}
+        title={confirmModal?.title || "Confirmation"}
+        message={confirmModal?.message}
+        onConfirm={() => {
+          confirmModal?.onConfirm();
+          setConfirmModal(null);
+        }}
+        onClose={() => setConfirmModal(null)}
+        confirmText="Confirm"
       />
 
       {showPicker.show && (

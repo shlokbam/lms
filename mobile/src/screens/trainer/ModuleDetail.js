@@ -39,6 +39,7 @@ export default function TrainerModuleDetail() {
   const [showPicker, setShowPicker] = useState({ show: false, field: null, mode: 'date' });
   const [reportData, setReportData] = useState(null);
   const [notice, setNotice] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
 
   const formatDateForBackend = (date) => {
     if (!date) return '';
@@ -671,6 +672,18 @@ export default function TrainerModuleDetail() {
         title={notice?.title}
         message={notice?.message}
         onConfirm={() => setNotice(null)}
+      />
+
+      <ThemedModal
+        visible={!!confirmModal}
+        title={confirmModal?.title || "Confirmation"}
+        message={confirmModal?.message}
+        onConfirm={() => {
+          confirmModal?.onConfirm();
+          setConfirmModal(null);
+        }}
+        onClose={() => setConfirmModal(null)}
+        confirmText="Confirm"
       />
     </View>
   );
