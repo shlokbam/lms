@@ -26,7 +26,7 @@ export default function CreateEditTest() {
       { text: '', a: '', b: '', c: '', d: '', correct: 'A', marks: 1 }
     ]
   });
-  const [modal, setModal] = useState({ show: false, title: '', message: '', type: 'success' });
+  const [notice, setNotice] = useState(null);
 
   const [showPicker, setShowPicker] = useState({ show: false, field: null, mode: 'date' });
 
@@ -84,7 +84,7 @@ export default function CreateEditTest() {
         }))
       });
     } catch (e) {
-      alert("Failed to load test details");
+      setNotice({ title: "Error", message: "Failed to load test details" });
     } finally {
       setLoading(false);
     }
@@ -111,8 +111,8 @@ export default function CreateEditTest() {
   };
 
   const handleSave = async () => {
-    if (!testData.title.trim()) return alert("Please enter a test title");
-    if (testData.questions.some(q => !q.text.trim())) return alert("All questions must have text");
+    if (!testData.title.trim()) return setNotice({ title: "Incomplete", message: "Please enter a test title" });
+    if (testData.questions.some(q => !q.text.trim())) return setNotice({ title: "Incomplete", message: "All questions must have text" });
     
     setSubmitting(true);
     try {
@@ -316,12 +316,12 @@ export default function CreateEditTest() {
       </ScrollView>
 
       <ThemedModal
-        visible={modal.show}
-        title={modal.title}
-        message={modal.message}
+        visible={!!notice}
+        title={notice?.title}
+        message={notice?.message}
         onConfirm={() => {
-          setModal({ ...modal, show: false });
-          if (modal.title === 'Success') navigation.goBack();
+          setNotice(null);
+          if (notice?.title === 'Success') navigation.goBack();
         }}
         confirmText="OK"
       />

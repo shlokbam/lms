@@ -38,6 +38,8 @@ export const theme = {
     skyBg: 'rgba(56,189,248,0.1)',
     violet: '#A78BFA',
     violetBg: 'rgba(167,139,250,0.1)',
+    info: '#38BDF8',
+    warning: '#FBBF24',
   },
   spacing: {
     xs: 4,

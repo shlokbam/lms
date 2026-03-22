@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, TextInput, TouchableOpacity, RefreshControl, Modal, Alert, Text } from 'react-native';
 import { theme } from '../../theme/theme';
 import { Typography, Card, Spacer, PremiumLoading, Button, ThemedModal, ThemedPicker } from '../../components/UI';
-import { Search, Filter, Calendar, Users, Layers, ChevronRight, Video, Clock, Plus, BarChart2, Edit3, Trash2 } from 'lucide-react-native';
+import { Search, Filter, Calendar, Users, Layers, ChevronRight, Video, Clock as LucideClock, Plus, BarChart2, Edit3, Trash2 } from 'lucide-react-native';
 import api from '../../api/api';
 import { useNavigation } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -213,11 +213,10 @@ export default function TrainingModules() {
 
             return (
               <Card key={mod.id} style={styles.modCard}>
-                <View style={[styles.modHeader, { justifyContent: 'space-between', marginBottom: 4 }]}>
+                <View style={[styles.modHeader, { marginBottom: 4 }]}>
                    <Typography variant="small" style={{ color: theme.colors.acc, fontWeight: '800', letterSpacing: 1 }}>
                      {(mod.category || 'GENERAL').toUpperCase()}
                    </Typography>
-                   <Typography variant="small" style={{ color: theme.colors.t4 }}>ID: {mod.id}</Typography>
                 </View>
 
                 <Typography variant="h2" style={{ marginBottom: 6 }}>{mod.title}</Typography>
@@ -245,7 +244,7 @@ export default function TrainingModules() {
                 
                 {mod.start_datetime && (
                   <View style={styles.dateRow}>
-                    <Clock size={12} color={theme.colors.t4} />
+                    <LucideClock size={12} color={theme.colors.t4} />
                     <Typography variant="small" style={styles.dateText}>
                       {formatDate(mod.start_datetime)}
                     </Typography>
@@ -265,16 +264,17 @@ export default function TrainingModules() {
                   <TouchableOpacity 
                     style={[styles.actionBtn, { borderRightWidth: 0 }]} 
                     onPress={() => {
-                      Alert.alert("Delete Module", "Permanent action. Are you sure?", [
-                        { text: "Cancel", style: "cancel" },
-                        { text: "Delete", style: "destructive", onPress: async () => {
+                      setConfirmModal({
+                        title: "Delete Module",
+                        message: "Permanent action. Are you sure?",
+                        onConfirm: async () => {
                           try {
                             await api.delete(`/api/trainer/module/${mod.id}`);
                             setNotice({ title: 'Success', message: 'Module deleted successfully' });
                             fetchModules();
                           } catch (e) { setNotice({ title: 'Error', message: "Failed to delete module" }); }
-                        }}
-                      ]);
+                        }
+                      });
                     }}
                   >
                     <Trash2 size={20} color={theme.colors.red} />
@@ -472,11 +472,10 @@ export default function TrainingModules() {
       </ThemedModal>
 
       <ThemedModal
-        visible={modal.show}
-        title={modal.title}
-        message={modal.message}
-        onConfirm={() => setModal({ ...modal, show: false })}
-        confirmText="OK"
+        visible={!!notice}
+        title={notice?.title}
+        message={notice?.message}
+        onConfirm={() => setNotice(null)}
       />
 
       {showPicker.show && (

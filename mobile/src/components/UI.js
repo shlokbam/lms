@@ -108,7 +108,11 @@ export function Button({ title, onPress, variant = 'primary', icon, style, textS
       onPress={onPress}
       {...props}
     >
-      {icon && React.createElement(icon, { size: 18, color: getTextStyle().color })}
+      {icon && (
+        typeof icon === 'function' 
+          ? React.createElement(icon, { size: 18, color: getTextStyle().color })
+          : icon
+      )}
       <Text style={[styles.btnText, getTextStyle(), textStyle]}>
         {title}
       </Text>

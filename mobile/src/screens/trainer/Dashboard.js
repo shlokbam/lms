@@ -71,7 +71,7 @@ export default function TrainerDashboard() {
         </View>
         <View style={[styles.statsRow, { marginTop: 12 }]}>
           <StatCard title="Live" value={data.ongoing} icon={Zap} color={theme.colors.red} />
-          <StatCard title="Upcoming" value={data.upcoming} icon={Clock} color={theme.colors.info} />
+          <StatCard title="Upcoming" value={data.upcoming} icon={Clock} color={theme.colors.amber} />
         </View>
 
         <Spacer h={32} />

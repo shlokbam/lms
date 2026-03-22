@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert, TextInput, Text } from 'react-native';
 import { theme } from '../../theme/theme';
 import { Typography, Card, Spacer, PremiumLoading, Button, ThemedModal, ThemedPicker } from '../../components/UI';
-import { ChevronLeft, Plus, Trash2, FileText, Video, Layers, Beaker, Calendar, Upload, BarChart2 } from 'lucide-react-native';
+import { ChevronLeft, Plus, Trash2, FileText, Video, Layers, Beaker, Calendar, Upload, BarChart2, Clock, Edit3 } from 'lucide-react-native';
 import api from '../../api/api';
 import * as DocumentPicker from 'expo-document-picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -120,16 +120,17 @@ export default function TrainerModuleDetail() {
   };
 
   const deleteChapter = (chId) => {
-    Alert.alert("Delete Chapter", "Are you sure? This will delete all materials inside.", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: async () => {
+    setConfirmModal({
+      title: "Delete Chapter",
+      message: "Are you sure? This will delete all materials inside.",
+      onConfirm: async () => {
         try {
           await api.delete(`/api/trainer/module/${moduleId}/chapter/${chId}`);
           setNotice({ title: 'Success', message: 'Chapter deleted successfully' });
           fetchDetail();
         } catch (e) { setNotice({ title: 'Error', message: "Failed to delete chapter" }); }
-      }}
-    ]);
+      }
+    });
   };
 
   const pickFile = async () => {
@@ -190,29 +191,31 @@ export default function TrainerModuleDetail() {
   };
 
   const deleteMaterial = (chId, matId) => {
-    Alert.alert("Delete Material", "Are you sure you want to delete this material?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: async () => {
+    setConfirmModal({
+      title: "Delete Material",
+      message: "Are you sure you want to delete this material?",
+      onConfirm: async () => {
         try {
           await api.delete(`/api/trainer/module/${moduleId}/material/${matId}`);
           setNotice({ title: 'Success', message: 'Material deleted successfully' });
           fetchDetail();
         } catch (e) { setNotice({ title: 'Error', message: "Failed to delete material" }); }
-      }}
-    ]);
+      }
+    });
   };
 
   const deleteTest = (testId) => {
-    Alert.alert("Delete Test", "Are you sure? This will delete all question and attempt records.", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: async () => {
+    setConfirmModal({
+      title: "Delete Test",
+      message: "Are you sure? This will delete all question and attempt records.",
+      onConfirm: async () => {
         try {
           await api.delete(`/api/trainer/module/${moduleId}/test/${testId}`);
           setNotice({ title: 'Success', message: 'Test deleted successfully' });
           fetchDetail();
         } catch (e) { setNotice({ title: 'Error', message: "Failed to delete test" }); }
-      }}
-    ]);
+      }
+    });
   };
 
   const handleSaveSchedule = async () => {
@@ -290,6 +293,9 @@ export default function TrainerModuleDetail() {
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.iconButton} onPress={() => openUploadModal()}>
                   <Upload size={20} color={theme.colors.acc} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('ModuleReports', { moduleId })}>
+                  <BarChart2 size={20} color={theme.colors.green} />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.iconButton} onPress={() => setSchedModal(true)}>
                   <Calendar size={20} color={theme.colors.acc} />
@@ -444,31 +450,39 @@ export default function TrainerModuleDetail() {
             )}
             <Spacer h={12} />
             
-            {(reportData?.reports || []).filter(r => r.test_id === selectedTestId || !selectedTestId).map((rep, i) => (
-              <Card key={i} style={styles.enrolleeCard}>
-                <View style={styles.row}>
-                  <View style={styles.avatar}>
-                    <Text style={{ color: '#fff', fontWeight: 'bold' }}>{rep.trainee_name[0]}</Text>
-                  </View>
-                  <View style={{ flex: 1, marginLeft: 12 }}>
-                    <Typography variant="body" style={{ fontWeight: '700' }}>
-                      <Text>{rep.trainee_name}</Text>
-                    </Typography>
-                    <Typography variant="small" style={{ color: theme.colors.t4 }}>
-                      <Text>{rep.score !== null ? `Score: ${rep.score}/${rep.total_marks}` : 'No attempt'}</Text>
-                    </Typography>
-                  </View>
-                  <View style={[styles.badge, { backgroundColor: rep.passed ? theme.colors.green + '20' : (rep.score !== null ? theme.colors.red + '20' : theme.colors.card2) }]}>
-                    <Typography variant="small" style={{ color: rep.passed ? theme.colors.green : (rep.score !== null ? theme.colors.red : theme.colors.t4), fontSize: 10 }}>
-                      {rep.passed ? 'PASSED' : (rep.score !== null ? 'FAILED' : 'PENDING')}
-                    </Typography>
-                  </View>
-                </View>
-              </Card>
-            ))}
+            {(reportData?.report_data || []).map((rep, i) => {
+              const attempt = selectedTestId ? rep.attempts[selectedTestId] : null;
+              const hasAttempt = !!attempt;
+              const passed = attempt?.passed || false;
+              const score = attempt?.marks_obtained ?? null;
+              const total = attempt?.total_marks ?? 100;
 
-            {(!reportData || !reportData.reports || reportData.reports.length === 0) && (
-              <Typography variant="caption" style={{ textAlign: 'center', marginTop: 20 }}>No report data available yet.</Typography>
+              return (
+                <Card key={i} style={styles.enrolleeCard}>
+                  <View style={styles.row}>
+                    <View style={styles.avatar}>
+                      <Text style={{ color: '#fff', fontWeight: 'bold' }}>{rep.name[0]}</Text>
+                    </View>
+                    <View style={{ flex: 1, marginLeft: 12 }}>
+                      <Typography variant="body" style={{ fontWeight: '700' }}>
+                        <Text>{rep.name}</Text>
+                      </Typography>
+                      <Typography variant="small" style={{ color: theme.colors.t4 }}>
+                        <Text>{hasAttempt ? `Score: ${score}/${total}` : 'No attempt yet'}</Text>
+                      </Typography>
+                    </View>
+                    <View style={[styles.badge, { backgroundColor: passed ? theme.colors.green + '20' : (hasAttempt ? theme.colors.red + '20' : theme.colors.card2) }]}>
+                      <Typography variant="small" style={{ color: passed ? theme.colors.green : (hasAttempt ? theme.colors.red : theme.colors.t4), fontSize: 10 }}>
+                        {passed ? 'PASSED' : (hasAttempt ? 'FAILED' : 'PENDING')}
+                      </Typography>
+                    </View>
+                  </View>
+                </Card>
+              );
+            })}
+
+            {(!reportData || !reportData.report_data || reportData.report_data.length === 0) && (
+              <Typography variant="caption" style={{ textAlign: 'center', marginTop: 20 }}>No trainees enrolled in this module yet.</Typography>
             )}
           </>
         )}

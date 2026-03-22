@@ -121,35 +121,34 @@ export default function ModuleDetail({ route, navigation }) {
       statusColor = isPassed ? theme.colors.green : theme.colors.red;
       isLocked = attData.count >= test.max_attempts; 
     } else {
-      // Hierarchical check first
+      // 1. Initial hierarchical check (pre/mid/post) 
       const modPhase = data.phase; // pre, live, post
       let phaseAllowed = false;
-
+      
       if (test.test_type === 'pre') {
         phaseAllowed = (modPhase === 'pre' || modPhase === 'live');
-        phaseMessage = "Available during Pre-session";
       } else if (test.test_type === 'mid') {
         phaseAllowed = (modPhase === 'live');
-        phaseMessage = "Available during Live session";
       } else if (test.test_type === 'post') {
         phaseAllowed = (modPhase === 'live' || modPhase === 'post');
-        phaseMessage = "Available after session starts";
       }
 
-      // Chain Unlock Logic: If Mid/Pre passed, allow next even if phase is slightly off
+      // 2. Scheduled Window Priority: If start time has arrived, honor the scheduling!
+      if (start && now >= start) phaseAllowed = true;
+
+      // 3. Chain Unlock Logic: If Mid/Pre passed, allow next even if phase is slightly off
       const preTest = data.tests.find(t => t.test_type === 'pre');
       const midTest = data.tests.find(t => t.test_type === 'mid');
       const prePassed = preTest ? (data.attempts_map[preTest.id]?.latest?.passed) : true;
       const midPassed = midTest ? (data.attempts_map[midTest.id]?.latest?.passed) : true;
 
       if (test.test_type === 'mid' && prePassed) phaseAllowed = true;
-      if (test.test_type === 'post' && (midPassed || prePassed)) phaseAllowed = true; // Even more permissive
+      if (test.test_type === 'post' && (midPassed || prePassed)) phaseAllowed = true;
 
       if (!phaseAllowed) {
         statusText = "Locked";
         statusColor = theme.colors.t4;
         isLocked = true;
-        // Specific reason for user feedback
         if (test.test_type === 'mid') phaseMessage = "Complete Pre-test first";
         if (test.test_type === 'post') phaseMessage = "Complete Mid-test first";
       } else if (start && now < start) {
@@ -157,7 +156,7 @@ export default function ModuleDetail({ route, navigation }) {
         statusColor = theme.colors.amber;
         isLocked = true;
         phaseMessage = `Opens at ${new Date(start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-      } else if (end && now >= end) { // Use >= for better accuracy at boundary
+      } else if (end && now >= end) {
         statusText = "Closed";
         statusColor = theme.colors.red;
         isLocked = true;
