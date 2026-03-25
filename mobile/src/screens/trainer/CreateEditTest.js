@@ -128,19 +128,9 @@ export default function CreateEditTest() {
         await api.post(`/api/trainer/module/${moduleId}/test`, payload);
       }
       
-      setModal({
-        show: true,
-        title: 'Success',
-        message: 'Test saved successfully!',
-        type: 'success'
-      });
+      setNotice({ title: 'Success', message: 'Test saved successfully!' });
     } catch (e) {
-      setModal({
-        show: true,
-        title: 'Error',
-        message: e.response?.data?.detail || "Failed to save test",
-        type: 'error'
-      });
+      setNotice({ title: 'Error', message: e.response?.data?.detail || 'Failed to save test' });
     } finally {
       setSubmitting(false);
     }

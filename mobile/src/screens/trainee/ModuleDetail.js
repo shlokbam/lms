@@ -34,6 +34,130 @@ function canAccess(matPhase, modulePhase) {
   return PHASE_ORDER[matPhase] <= PHASE_ORDER[modulePhase];
 }
 
+function MaterialRowComponent({ mat, data, navigation }) {
+  const isDone = data.progress_map[mat.id]?.completed;
+  const accessible = canAccess(mat.release_phase, data.phase);
+  const Icon = mat.file_type === 'video' ? PlayCircle : FileText;
+
+  return (
+    <TouchableOpacity
+      style={[styles.matRow, !accessible && { opacity: 0.5 }]}
+      activeOpacity={accessible ? 0.7 : 1}
+      onPress={() => accessible ? navigation.navigate('DocumentViewer', { material: mat, moduleId: mat.module_id }) : null}
+    >
+      <View style={[styles.matIcon, { backgroundColor: (accessible && isDone) ? theme.colors.greenBg : theme.colors.card2 }]}>
+        <Icon size={18} color={accessible ? (isDone ? theme.colors.green : theme.colors.acc) : theme.colors.t4} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Typography variant="body" style={(!accessible || isDone) && { color: theme.colors.t3 }}>{mat.title}</Typography>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <View style={[styles.miniBadge, { backgroundColor: accessible ? theme.colors.acc + '20' : theme.colors.card2 }]}>
+            <Typography variant="small" style={{ fontSize: 9, color: accessible ? theme.colors.acc : theme.colors.t4, fontWeight: '700' }}>
+              {mat.release_phase.toUpperCase()}
+            </Typography>
+          </View>
+          {!accessible && (
+            <Typography variant="small" style={{ color: theme.colors.t4, fontSize: 10 }}>Locked: available in {mat.release_phase} phase</Typography>
+          )}
+        </View>
+      </View>
+      {isDone && <CheckCircle2 size={16} color={theme.colors.green} />}
+    </TouchableOpacity>
+  );
+}
+
+function TestCardComponent({ test, data, navigation }) {
+  const attData = data.attempts_map[test.id] || { latest: null, count: 0 };
+  const attempt = attData.latest;
+  const isPassed = attempt?.passed;
+
+  const now = new Date(data.now_iso);
+  const start = test.start_datetime ? new Date(test.start_datetime) : null;
+  const end = test.end_datetime ? new Date(test.end_datetime) : null;
+  let statusText = '';
+  let statusColor = theme.colors.t3;
+  let isLocked = false;
+  let phaseMessage = '';
+
+  if (attempt) {
+    statusText = isPassed ? 'Passed' : 'Attempted';
+    statusColor = isPassed ? theme.colors.green : theme.colors.red;
+    isLocked = attData.count >= test.max_attempts;
+  } else {
+    const modPhase = data.phase;
+    let phaseAllowed = false;
+    if (test.test_type === 'pre') phaseAllowed = (modPhase === 'pre' || modPhase === 'live');
+    else if (test.test_type === 'mid') phaseAllowed = (modPhase === 'live');
+    else if (test.test_type === 'post') phaseAllowed = (modPhase === 'live' || modPhase === 'post');
+
+    if (start && now >= start) phaseAllowed = true;
+
+    const preTest = data.tests.find(t => t.test_type === 'pre');
+    const midTest = data.tests.find(t => t.test_type === 'mid');
+    const prePassed = preTest ? (data.attempts_map[preTest.id]?.latest?.passed) : true;
+    const midPassed = midTest ? (data.attempts_map[midTest.id]?.latest?.passed) : true;
+
+    if (test.test_type === 'mid' && prePassed) phaseAllowed = true;
+    if (test.test_type === 'post' && (midPassed || prePassed)) phaseAllowed = true;
+
+    if (!phaseAllowed) {
+      statusText = 'Locked'; statusColor = theme.colors.t4; isLocked = true;
+      if (test.test_type === 'mid') phaseMessage = 'Complete Pre-test first';
+      if (test.test_type === 'post') phaseMessage = 'Complete Mid-test first';
+    } else if (start && now < start) {
+      statusText = 'Scheduled'; statusColor = theme.colors.amber; isLocked = true;
+      phaseMessage = `Opens at ${new Date(start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (end && now >= end) {
+      statusText = 'Closed'; statusColor = theme.colors.red; isLocked = true;
+      phaseMessage = 'Test window has ended';
+    } else {
+      statusText = 'Open now'; statusColor = theme.colors.green;
+      phaseMessage = 'Assessment is ready';
+    }
+  }
+
+  const fmtTime = (d) => d ? new Date(d).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '—';
+
+  return (
+    <TouchableOpacity
+      style={[styles.testCard, isLocked && { opacity: 0.6 }]}
+      activeOpacity={isLocked ? 1 : 0.8}
+      onPress={() => isLocked ? null : navigation.navigate('TakeTest', { testId: test.id })}
+    >
+      <View style={styles.testHeader}>
+        <HelpCircle size={20} color={isLocked ? theme.colors.t3 : theme.colors.acc} />
+        <Typography variant="h3" style={{ flex: 1, marginBottom: 0, marginLeft: 10, color: isLocked ? theme.colors.t3 : theme.colors.t1 }}>{test.title}</Typography>
+        {isPassed && <CheckCircle2 size={20} color={theme.colors.green} />}
+      </View>
+      <View style={{ marginLeft: 30, marginTop: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Clock size={12} color={theme.colors.t3} />
+            <Typography variant="caption">{test.duration_minutes}m</Typography>
+          </View>
+          <Typography variant="caption" style={{ color: statusColor, fontWeight: '700' }}>● {statusText}</Typography>
+          {phaseMessage && <Typography variant="caption" style={{ color: theme.colors.t4, fontStyle: 'italic' }}>({phaseMessage})</Typography>}
+          {test.max_attempts > 1 && <Typography variant="caption" style={{ color: theme.colors.t3 }}>Attempts: {attData.count}/{test.max_attempts}</Typography>}
+        </View>
+        <View style={styles.testWindowRow}>
+          <View style={{ flex: 1 }}><Typography variant="small" style={styles.windowLabel}>START</Typography><Typography variant="caption">{fmtTime(test.start_datetime)}</Typography></View>
+          <View style={{ flex: 1 }}><Typography variant="small" style={styles.windowLabel}>END</Typography><Typography variant="caption">{fmtTime(test.end_datetime)}</Typography></View>
+          <View style={{ flex: 1 }}><Typography variant="small" style={styles.windowLabel}>PASS SCORE</Typography><Typography variant="caption">{test.passing_marks}%</Typography></View>
+        </View>
+      </View>
+      {attempt && (
+        <View style={styles.attemptInfo}>
+          <View style={styles.resultBadge}>
+            <Typography variant="small" style={{ color: isPassed ? theme.colors.green : theme.colors.red, fontWeight: '700' }}>
+              LATEST SCORE: {Math.round(attempt.percentage)}% ({attempt.score}/{attempt.total_marks})
+            </Typography>
+          </View>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+}
+
 export default function ModuleDetail({ route, navigation }) {
   const { moduleId } = route.params;
   const [data, setData] = useState(null);
@@ -70,166 +194,12 @@ export default function ModuleDetail({ route, navigation }) {
 
   if (loading || !data) return <PremiumLoading message="Loading Module Details..." />;
 
-  const MaterialRow = ({ mat }) => {
-    const isDone = data.progress_map[mat.id]?.completed;
-    const accessible = canAccess(mat.release_phase, data.phase);
-    const Icon = mat.file_type === 'video' ? PlayCircle : FileText;
-
-    return (
-      <TouchableOpacity 
-        style={[styles.matRow, !accessible && { opacity: 0.5 }]} 
-        activeOpacity={accessible ? 0.7 : 1}
-        onPress={() => accessible ? navigation.navigate('DocumentViewer', { material: mat, moduleId: moduleId }) : null}
-      >
-        <View style={[styles.matIcon, { backgroundColor: (accessible && isDone) ? theme.colors.greenBg : theme.colors.card2 }]}>
-          <Icon size={18} color={accessible ? (isDone ? theme.colors.green : theme.colors.acc) : theme.colors.t4} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Typography variant="body" style={(!accessible || isDone) && { color: theme.colors.t3 }}>{mat.title}</Typography>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-             <View style={[styles.miniBadge, { backgroundColor: accessible ? theme.colors.acc + '20' : theme.colors.card2 }]}>
-                <Typography variant="small" style={{ fontSize: 9, color: accessible ? theme.colors.acc : theme.colors.t4, fontWeight: '700' }}>
-                  {mat.release_phase.toUpperCase()}
-                </Typography>
-             </View>
-             {!accessible && (
-               <Typography variant="small" style={{ color: theme.colors.t4, fontSize: 10 }}>Locked: available in {mat.release_phase} phase</Typography>
-             )}
-          </View>
-        </View>
-        {isDone && <CheckCircle2 size={16} color={theme.colors.green} />}
-      </TouchableOpacity>
-    );
-  };
-
-  const TestCard = ({ test }) => {
-    const attData = data.attempts_map[test.id] || { latest: null, count: 0 };
-    const attempt = attData.latest;
-    const isPassed = attempt?.passed;
-    
-    // Check window
-    const now = new Date(data.now_iso);
-    const start = test.start_datetime ? new Date(test.start_datetime) : null;
-    const end = test.end_datetime ? new Date(test.end_datetime) : null;
-    let statusText = "";
-    let statusColor = theme.colors.t3;
-    let isLocked = false;
-    let phaseMessage = "";
-
-    if (attempt) {
-      statusText = isPassed ? "Passed" : "Attempted";
-      statusColor = isPassed ? theme.colors.green : theme.colors.red;
-      isLocked = attData.count >= test.max_attempts; 
-    } else {
-      // 1. Initial hierarchical check (pre/mid/post) 
-      const modPhase = data.phase; // pre, live, post
-      let phaseAllowed = false;
-      
-      if (test.test_type === 'pre') {
-        phaseAllowed = (modPhase === 'pre' || modPhase === 'live');
-      } else if (test.test_type === 'mid') {
-        phaseAllowed = (modPhase === 'live');
-      } else if (test.test_type === 'post') {
-        phaseAllowed = (modPhase === 'live' || modPhase === 'post');
-      }
-
-      // 2. Scheduled Window Priority: If start time has arrived, honor the scheduling!
-      if (start && now >= start) phaseAllowed = true;
-
-      // 3. Chain Unlock Logic: If Mid/Pre passed, allow next even if phase is slightly off
-      const preTest = data.tests.find(t => t.test_type === 'pre');
-      const midTest = data.tests.find(t => t.test_type === 'mid');
-      const prePassed = preTest ? (data.attempts_map[preTest.id]?.latest?.passed) : true;
-      const midPassed = midTest ? (data.attempts_map[midTest.id]?.latest?.passed) : true;
-
-      if (test.test_type === 'mid' && prePassed) phaseAllowed = true;
-      if (test.test_type === 'post' && (midPassed || prePassed)) phaseAllowed = true;
-
-      if (!phaseAllowed) {
-        statusText = "Locked";
-        statusColor = theme.colors.t4;
-        isLocked = true;
-        if (test.test_type === 'mid') phaseMessage = "Complete Pre-test first";
-        if (test.test_type === 'post') phaseMessage = "Complete Mid-test first";
-      } else if (start && now < start) {
-        statusText = "Scheduled";
-        statusColor = theme.colors.amber;
-        isLocked = true;
-        phaseMessage = `Opens at ${new Date(start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-      } else if (end && now >= end) {
-        statusText = "Closed";
-        statusColor = theme.colors.red;
-        isLocked = true;
-        phaseMessage = "Test window has ended";
-      } else {
-        statusText = "Open now";
-        statusColor = theme.colors.green;
-        phaseMessage = "Assessment is ready";
-      }
-    }
-
-    const fmtTime = (d) => d ? new Date(d).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '—';
-
-    return (
-      <TouchableOpacity 
-        style={[styles.testCard, isLocked && { opacity: 0.6 }]} 
-        activeOpacity={isLocked ? 1 : 0.8}
-        onPress={() => isLocked ? null : navigation.navigate('TakeTest', { testId: test.id })}
-      >
-        <View style={styles.testHeader}>
-          <HelpCircle size={20} color={isLocked ? theme.colors.t3 : theme.colors.acc} />
-          <Typography variant="h3" style={{ flex: 1, marginBottom: 0, marginLeft: 10, color: isLocked ? theme.colors.t3 : theme.colors.t1 }}>{test.title}</Typography>
-          {isPassed && <CheckCircle2 size={20} color={theme.colors.green} />}
-        </View>
-        <View style={{ marginLeft: 30, marginTop: 8 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 4 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Clock size={12} color={theme.colors.t3} />
-              <Typography variant="caption">{test.duration_minutes}m</Typography>
-            </View>
-            <Typography variant="caption" style={{ color: statusColor, fontWeight: '700' }}>
-              ● {statusText}
-            </Typography>
-            {phaseMessage && (
-              <Typography variant="caption" style={{ color: theme.colors.t4, fontStyle: 'italic' }}>
-                ({phaseMessage})
-              </Typography>
-            )}
-            {test.max_attempts > 1 && (
-              <Typography variant="caption" style={{ color: theme.colors.t3 }}>
-                Attempts: {attData.count}/{test.max_attempts}
-              </Typography>
-            )}
-          </View>
-          
-          <View style={styles.testWindowRow}>
-            <View style={{ flex: 1 }}>
-              <Typography variant="small" style={styles.windowLabel}>START</Typography>
-              <Typography variant="caption">{fmtTime(test.start_datetime)}</Typography>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Typography variant="small" style={styles.windowLabel}>END</Typography>
-              <Typography variant="caption">{fmtTime(test.end_datetime)}</Typography>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Typography variant="small" style={styles.windowLabel}>PASS SCORE</Typography>
-              <Typography variant="caption">{test.passing_marks}%</Typography>
-            </View>
-          </View>
-        </View>
-
-        {attempt && (
-          <View style={styles.attemptInfo}>
-            <View style={styles.resultBadge}>
-              <Typography variant="small" style={{ color: isPassed ? theme.colors.green : theme.colors.red, fontWeight: '700' }}>
-                LATEST SCORE: {Math.round(attempt.percentage)}% ({attempt.score}/{attempt.total_marks})
-              </Typography>
-            </View>
-          </View>
-        )}
-      </TouchableOpacity>
-    );
-  };
+  const MaterialRow = ({ mat }) => (
+    <MaterialRowComponent mat={mat} data={data} navigation={navigation} />
+  );
+  const TestCard = ({ test }) => (
+    <TestCardComponent test={test} data={data} navigation={navigation} />
+  );
 
   return (
     <View style={styles.container}>

@@ -121,15 +121,15 @@ export default function TakeTest({ route, navigation }) {
 
       <View style={styles.progressSection}>
         <View style={styles.progTextRow}>
-          <Typography variant="h3" style={styles.progCounter}>
-            <Text>{String(currentIndex + 1).padStart(2, '0')}</Text>
+          <Text style={[styles.progCounter]}>
+            <Text style={{ color: theme.colors.t1 }}>{String(currentIndex + 1).padStart(2, '0')}</Text>
             <Text style={{ color: theme.colors.t4 }}>
               /{String(data.questions.length).padStart(2, '0')}
             </Text>
-          </Typography>
+          </Text>
           <View style={styles.pointsBadge}>
             <Award size={14} color={theme.colors.acc} />
-            <Typography variant="small" style={styles.pointsText}>{data.questions[currentIndex].marks.toFixed(1)} Points</Typography>
+            <Typography variant="small" style={styles.pointsText}>{(data.questions[currentIndex].marks ?? 1).toFixed(1)} Points</Typography>
           </View>
         </View>
         <View style={styles.progBarBg}>

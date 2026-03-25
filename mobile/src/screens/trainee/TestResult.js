@@ -13,8 +13,8 @@ import {
 } from 'lucide-react-native';
 
 export default function TestResult({ route, navigation }) {
-  const { score, total, testTitle, passed, moduleId } = route.params;
-  const percentage = Math.round((score / total) * 100);
+  const { score = 0, total = 0, testTitle = '', passed = false, moduleId } = route.params || {};
+  const percentage = total > 0 ? Math.round((score / total) * 100) : 0;
 
   return (
     <View style={styles.container}>
