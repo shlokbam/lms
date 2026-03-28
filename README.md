@@ -1,4 +1,4 @@
-# Eagle Learning Management System (Eagle LMS) 🦅💎
+# Eagle Learning Management System (Eagle LMS)
 
 Welcome to the **Eagle LMS** ecosystem—an enterprise-grade learning platform designed for high-performance training environments. This repository contains the full stack, including the backend API, a dual-role web frontend, and a premium mobile experience for trainees.
 
