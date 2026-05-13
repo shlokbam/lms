@@ -1,0 +1,23 @@
+{
+  "name": "lms",
+  "version": "1.0.0",
+  "description": "Welcome to the **Eagle LMS** ecosystem—an enterprise-grade learning platform designed for high-performance training environments. This repository contains the full stack, including the backend API, a dual-role web frontend, and a premium mobile experience for trainees.",
+  "main": "generate_srs.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shlokbam/lms.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shlokbam/lms/issues"
+  },
+  "homepage": "https://github.com/shlokbam/lms#readme",
+  "dependencies": {
+    "docx": "^9.6.1"
+  }
+}
