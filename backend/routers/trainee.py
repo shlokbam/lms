@@ -8,6 +8,7 @@ import json, os, shutil
 from database import get_db
 from deps import get_current_user
 from watermark import UPLOAD_DIR
+from utils.s3 import upload_file_to_s3
 import models, schemas
 from auth import hash_password, verify_password
 
@@ -281,6 +282,14 @@ async def upload_profile_pic(
     path = os.path.join(UPLOAD_DIR, fname)
     with open(path, "wb") as f:
         shutil.copyfileobj(file.file, f)
+    
+    # Upload to S3 and delete local file if successful
+    if upload_file_to_s3(path, fname):
+        try:
+            os.remove(path)
+        except Exception:
+            pass
+            
     current_user.profile_pic = fname
     db.commit()
     return {"ok": True, "profile_pic": fname}

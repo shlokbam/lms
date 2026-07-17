@@ -9,6 +9,7 @@ import os, shutil
 from database import get_db
 from deps import get_current_user, require_trainer
 from watermark import watermark_image, watermark_pdf, UPLOAD_DIR
+from utils.s3 import upload_file_to_s3, delete_file_from_s3
 import models, schemas
 
 router = APIRouter(prefix="/api/trainer", tags=["trainer"])
@@ -209,6 +210,13 @@ async def upload_material(
     with open(orig_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
 
+    # Upload to S3 and delete local file if successful
+    if upload_file_to_s3(orig_path, fname):
+        try:
+            os.remove(orig_path)
+        except Exception:
+            pass
+
     ftype = ("video" if ext in {"mp4", "mov", "avi", "mkv", "webm"}
              else "pdf" if ext == "pdf"
              else "ppt" if ext in {"ppt", "pptx"}
@@ -233,6 +241,7 @@ def delete_material(module_id: int, mat_id: int,
     if mat:
         for fname in [mat.file_path, mat.watermarked_path]:
             if fname:
+                delete_file_from_s3(fname)
                 p = os.path.join(UPLOAD_DIR, fname)
                 if os.path.exists(p):
                     os.remove(p)

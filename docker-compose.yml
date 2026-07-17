@@ -1,0 +1,59 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: lms-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: eagle_lms
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  backend:
+    build: ./backend
+    container_name: lms-backend
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./static:/app/static
+    environment:
+      - DATABASE_URL=mysql+pymysql://root:password@db:3306/eagle_lms
+      - USE_S3=true
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_ACCESS_KEY_ID=mock_key
+      - AWS_SECRET_ACCESS_KEY=mock_key
+      - AWS_REGION=us-east-1
+      - S3_BUCKET_NAME=eagle-lms-uploads
+    depends_on:
+      - db
+      - localstack
+
+  frontend:
+    build: ./frontend
+    container_name: lms-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+  localstack:
+    image: localstack/localstack:3.4.0
+    container_name: lms-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - localstack_data:/var/lib/localstack
+
+volumes:
+  mysql_data:
+  localstack_data:

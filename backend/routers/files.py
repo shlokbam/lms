@@ -8,6 +8,7 @@ from database import get_db
 from sqlalchemy.orm import Session
 import models
 from watermark import UPLOAD_DIR, watermark_pdf, watermark_image
+from utils.s3 import download_file_from_s3
 
 router = APIRouter(tags=["files"])
 
@@ -32,12 +33,14 @@ def serve_file(
     # Accept auth via query param (direct browser nav) or fall back to unauthenticated
     current_user = _get_user_from_request(token, db)
 
-    if current_user and current_user.role == "trainee":
-        # Trainees get a personalized watermarked version
-        file_path = os.path.join(UPLOAD_DIR, filename)
-        if not os.path.exists(file_path):
+    file_path = os.path.join(UPLOAD_DIR, filename)
+    # Check locally first; if not found, pull from S3
+    if not os.path.exists(file_path):
+        if not download_file_from_s3(filename, file_path):
             raise HTTPException(404, "File not found")
 
+    if current_user and current_user.role == "trainee":
+        # Trainees get a personalized watermarked version
         ext = filename.split(".")[-1].lower() if "." in filename else ""
         if ext in {"pdf", "png", "jpg", "jpeg", "webp"}:
             wm_filename = f"wm_{current_user.id}_{filename}"
@@ -53,7 +56,4 @@ def serve_file(
             
             return FileResponse(wm_path)
 
-    file_path = os.path.join(UPLOAD_DIR, filename)
-    if not os.path.exists(file_path):
-        raise HTTPException(404, "File not found")
     return FileResponse(file_path)
