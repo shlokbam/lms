@@ -4,6 +4,7 @@ pipeline {
     environment {
         // Adjust PATH to find brew packages (like python3, terraform, docker) on macOS
         PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${env.PATH}"
+        DATABASE_URL = "mysql+pymysql://root:password@127.0.0.1:3307/eagle_lms"
     }
 
     stages {
