@@ -72,8 +72,10 @@ Modern Jenkins blocks checking out from local Git directories. We accessed the J
 
 *(Additionally, the JVM arguments were saved permanently inside `/opt/homebrew/Cellar/jenkins-lts/2.568.1/homebrew.mxcl.jenkins-lts.plist`).*
 
-### The Admin Setup
-<img src="Static_Readme/Devops_Proof/Screenshot 2026-07-17 at 10.15.10 PM.png" width="800" alt="Jenkins Admin setup"/>
+### Pipeline SCM Configuration
+We configured the pipeline to target the local Git repository on the host machine:
+
+<img src="Static_Readme/Devops_Proof/Screenshot 2026-07-17 at 10.15.10 PM.png" width="800" alt="Jenkins Pipeline Configuration"/>
 
 ### 🏆 The Final Green Pipeline Build
 Our declarative `Jenkinsfile` runs the entire lifecycle (Checkout ➡️ Backend Unit Tests ➡️ Terraform Validation ➡️ Docker Verify Build) on every repository pull. 

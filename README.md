@@ -25,24 +25,24 @@ Here are the primary interface views from the Eagle LMS platform:
 
 <table align="center">
   <tr>
-    <td align="center"><b>Trainee Login Portal</b><br/>
-      <img src="Static_Readme/Website_Picture/WhatsApp Image 2026-05-20 at 16.04.43.jpeg" width="380" alt="Login Portal"/>
+    <td align="center"><b>Trainer Dashboard Overview</b><br/>
+      <img src="Static_Readme/Website_Picture/WhatsApp Image 2026-05-20 at 16.04.43.jpeg" width="380" alt="Trainer Dashboard"/>
     </td>
-    <td align="center"><b>TrainerPro Dashboard</b><br/>
-      <img src="Static_Readme/Website_Picture/WhatsApp Image 2026-05-20 at 16.04.43 (2).jpeg" width="380" alt="Trainer Dashboard"/>
-    </td>
-  </tr>
-  <tr>
-    <td align="center"><b>Dynamic Calender & Schedules</b><br/>
-      <img src="Static_Readme/Website_Picture/WhatsApp Image 2026-05-20 at 16.04.43 (3).jpeg" width="380" alt="Schedules"/>
-    </td>
-    <td align="center"><b>Trainees Management View</b><br/>
-      <img src="Static_Readme/Website_Picture/WhatsApp Image 2026-05-20 at 16.04.44 (1).jpeg" width="380" alt="Trainee Management"/>
+    <td align="center"><b>Trainer Course Content & Module Detail</b><br/>
+      <img src="Static_Readme/Website_Picture/WhatsApp Image 2026-05-20 at 16.04.43 (1).jpeg" width="380" alt="Module Details"/>
     </td>
   </tr>
   <tr>
-    <td align="center" colspan="2"><b>Performance Reports & Analytics</b><br/>
-      <img src="Static_Readme/Website_Picture/WhatsApp Image 2026-05-20 at 16.04.44 (2).jpeg" width="600" alt="Performance Analytics"/>
+    <td align="center"><b>Trainer Module Reports & Scores</b><br/>
+      <img src="Static_Readme/Website_Picture/WhatsApp Image 2026-05-20 at 16.04.43 (2).jpeg" width="380" alt="Module Reports"/>
+    </td>
+    <td align="center"><b>Trainee Profile Dashboard</b><br/>
+      <img src="Static_Readme/Website_Picture/WhatsApp Image 2026-05-20 at 16.04.44 (1).jpeg" width="380" alt="Trainee Profile"/>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2"><b>Trainee Training Calendar</b><br/>
+      <img src="Static_Readme/Website_Picture/WhatsApp Image 2026-05-20 at 16.04.44 (2).jpeg" width="600" alt="Trainee Calendar"/>
     </td>
   </tr>
 </table>
