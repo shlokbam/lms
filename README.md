@@ -1,105 +1,94 @@
-# 🦅 Eagle Learning Management System (Eagle LMS)
+<div align="center">
 
-[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
-[![React Native](https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactnative.dev/)
-[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Terraform](https://img.shields.io/badge/Terraform-7B42BC?style=for-the-badge&logo=terraform&logoColor=white)](https://www.terraform.io/)
-[![Jenkins](https://img.shields.io/badge/Jenkins-D24939?style=for-the-badge&logo=jenkins&logoColor=white)](https://www.jenkins.io/)
+<img src=".github/assets/banner.svg" alt="Eagle LMS: training, tracked" width="100%">
 
-Eagle LMS is a secure, cloud-native learning management platform designed for high-performance enterprise training. Featuring a dual-role (Trainer and Trainee) dashboard web app, a mobile learning client, secure watermarking for intellectual property protection, and an automated DevOps delivery pipeline.
+<img src="https://img.shields.io/badge/sponsor-Eagle%20Industrial%20Services-FF5A1F?style=flat-square&labelColor=2A2926" alt="sponsor: Eagle Industrial Services">
+<img src="https://img.shields.io/badge/apps-web%20%2B%20mobile-FF5A1F?style=flat-square&labelColor=2A2926" alt="apps: web + mobile">
+<img src="https://img.shields.io/badge/api-FastAPI-F2EFE7?style=flat-square&labelColor=2A2926" alt="api: FastAPI">
+<img src="https://img.shields.io/badge/db-MySQL%208-F2EFE7?style=flat-square&labelColor=2A2926" alt="db: MySQL 8">
+<img src="https://img.shields.io/badge/infra-Terraform%20%2B%20LocalStack-F2EFE7?style=flat-square&labelColor=2A2926" alt="infra: Terraform + LocalStack">
+<img src="https://img.shields.io/badge/ci-Jenkins-F2EFE7?style=flat-square&labelColor=2A2926" alt="ci: Jenkins">
 
----
+<a href="#demo">Demo</a> · <a href="#how-it-works">How it works</a> · <a href="#quickstart">Quickstart</a> · <a href="#design-decisions">Decisions</a> · <a href="DEVOPS_PROOF.md">DevOps log</a> · <a href="docs/DETAILS.md">Full notes</a>
 
-## 🔗 Cloud Infrastructure & CI/CD Pipeline Proof
+</div>
 
-> [!TIP]
-> **DevOps Portfolio Proof:**
-> For the complete local cloud simulation documentation, including step-by-step resolution of Docker port bindings, S3 path-style routing, database seeding, and the local Jenkins pipeline configuration, see the **[DevOps & Cloud Simulation Log (DEVOPS_PROOF.md)](DEVOPS_PROOF.md)**.
+## In one minute
 
----
+- **Problem:** company training needs controlled content delivery, tests and progress tracking, and course material that can't be passed around anonymously.
+- **What this does:** trainers publish content in phases, set timed multiple-choice tests and track each trainee's progress. Trainees learn on the web or a mobile app, and every PDF or image they open carries their own email as a watermark.
+- **Result:** delivered as an industry-sponsored team project that I led, with a completion letter from the company. The whole stack runs locally with one `docker compose up`, including a mocked AWS S3.
 
-## 🖼️ Application Interfaces (Website Showcase)
+## Demo
 
-Here are the primary interface views from the Eagle LMS platform:
-
-<table align="center">
-  <tr>
-    <td align="center"><b>Trainer Dashboard Overview</b><br/>
-      <img src="Static_Readme/Website_Picture/WhatsApp Image 2026-05-20 at 16.04.43.jpeg" width="380" alt="Trainer Dashboard"/>
-    </td>
-    <td align="center"><b>Trainer Course Content & Module Detail</b><br/>
-      <img src="Static_Readme/Website_Picture/WhatsApp Image 2026-05-20 at 16.04.43 (1).jpeg" width="380" alt="Module Details"/>
-    </td>
-  </tr>
-  <tr>
-    <td align="center"><b>Trainer Module Reports & Scores</b><br/>
-      <img src="Static_Readme/Website_Picture/WhatsApp Image 2026-05-20 at 16.04.43 (2).jpeg" width="380" alt="Module Reports"/>
-    </td>
-    <td align="center"><b>Trainee Profile Dashboard</b><br/>
-      <img src="Static_Readme/Website_Picture/WhatsApp Image 2026-05-20 at 16.04.44 (1).jpeg" width="380" alt="Trainee Profile"/>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" colspan="2"><b>Trainee Training Calendar</b><br/>
-      <img src="Static_Readme/Website_Picture/WhatsApp Image 2026-05-20 at 16.04.44 (2).jpeg" width="600" alt="Trainee Calendar"/>
-    </td>
-  </tr>
+<table>
+<tr>
+<td><img src="Static_Readme/Website_Picture/WhatsApp%20Image%202026-05-20%20at%2016.04.43.jpeg" alt="Trainer dashboard" width="100%"></td>
+<td><img src="Static_Readme/Website_Picture/WhatsApp%20Image%202026-05-20%20at%2016.04.43%20%282%29.jpeg" alt="Module reports and scores" width="100%"></td>
+</tr>
+<tr>
+<td align="center"><sub><b>Trainer dashboard</b></sub></td>
+<td align="center"><sub><b>Module reports and scores</b></sub></td>
+</tr>
+<tr>
+<td><img src="Static_Readme/Website_Picture/WhatsApp%20Image%202026-05-20%20at%2016.04.44%20%281%29.jpeg" alt="Trainee profile" width="100%"></td>
+<td><img src="Static_Readme/Website_Picture/WhatsApp%20Image%202026-05-20%20at%2016.04.44%20%282%29.jpeg" alt="Trainee calendar" width="100%"></td>
+</tr>
+<tr>
+<td align="center"><sub><b>Trainee profile</b></sub></td>
+<td align="center"><sub><b>Training calendar</b></sub></td>
+</tr>
 </table>
 
----
+## How it works
 
-## 🏗️ Core Architecture & Tech Stack
-
-Eagle LMS is organized as a monorepo containing three core subsystems:
-
-### 1. Backend API Service (`/backend`)
-*   **Framework:** FastAPI (Python 3.11/3.13) for high-performance HTTP request handling.
-*   **ORM / Database:** SQLAlchemy with PyMySQL connecting to a MySQL 8.0 instance.
-*   **Security:** Role-based JWT access tokens (`python-jose`) and password hashing (`passlib` with `bcrypt`).
-*   **File Storage:** AWS S3 (simulated locally via LocalStack) with lazy-downloading caching routines.
-*   **Watermarking Engine:** PDF rendering (`reportlab`) and image compositing (`Pillow`) for personalizing learning resources with trainees' emails.
-
-### 2. TrainerPro Web Frontend (`/frontend`)
-*   **Build Tool & Framework:** Vite + React 18.
-*   **Styling:** Custom dark-themed responsive layout optimized for analytical dashboards.
-*   **Routing & APIs:** React Router DOM and Axios.
-
-### 3. Mobile Companion Client (`/mobile`)
-*   **Framework:** React Native + Expo.
-*   **Purpose:** Immersive, on-the-go training for field security personnel.
-
----
-
-## 🚀 Quick Start (Local Run)
-
-### 📋 Prerequisites
-Ensure you have the following installed on your machine:
-*   [Docker Desktop](https://www.docker.com/products/docker-desktop/) (start the daemon before proceeding).
-*   [Terraform CLI](https://developer.hashicorp.com/terraform/install).
-
-### 1. Launch the Stack
-Run the containers in detached mode:
-```bash
-docker compose up -d
-```
-This spins up:
-*   **MySQL Database:** Exposed on host port `3307` (to prevent conflicts with any local MySQL running on port 3306).
-*   **FastAPI Backend:** Exposed on host port `8000`.
-*   **Vite Frontend:** Exposed on host port `5173`.
-*   **LocalStack AWS Emulator:** Exposed on host port `4566`.
-
-### 2. Provision S3 Bucket
-Initialize and apply the Terraform configuration to create the S3 bucket in LocalStack:
-```bash
-cd infra
-terraform init
-terraform apply -auto-approve
+```mermaid
+flowchart LR
+    W[Trainer web app · React] --> API[FastAPI · JWT roles]
+    T[Trainee web app] --> API
+    M[Mobile app · React Native + Expo] --> API
+    API --> DB[(MySQL 8)]
+    API --> S3[(S3 · LocalStack)]
+    API --> WM[Watermark engine · reportlab + Pillow]
 ```
 
-### 3. Log In
-Open your browser and navigate to:
-*   **Web Frontend:** `http://localhost:5173`
-*   **Demo Trainer Credentials:** `trainer@eagle.com` / `trainer123`
-*   **Demo Trainee Credentials:** `trainee@eagle.com` / `trainee123`
-*   **FastAPI Swagger Documentation:** `http://localhost:8000/docs`
+| Part | What it does |
+| :--- | :--- |
+| `backend/routers/` | Auth, trainer, trainee, files, progress and notifications APIs |
+| `backend/watermark.py` | Stamps each trainee's email onto PDFs and images when they open them |
+| `frontend/` | Trainer and trainee dashboards (Vite + React) |
+| `mobile/` | React Native + Expo client for field staff |
+| `infra/` | Terraform for the S3 bucket, pointed at LocalStack |
+| `Jenkinsfile` | Backend tests, Terraform validation and a Docker build check |
+
+## Quickstart
+
+Needs Docker Desktop and the Terraform CLI.
+
+```bash
+docker compose up -d                 # MySQL :3307, API :8000, web :5173, LocalStack :4566
+cd infra && terraform init && terraform apply -auto-approve   # create the S3 bucket
+```
+
+Open `http://localhost:5173` and sign in as `trainer@eagle.com` / `trainer123` or `trainee@eagle.com` / `trainee123`. API docs: `http://localhost:8000/docs`.
+
+## Design decisions
+
+- **Watermark on the way out.** Each trainee gets a personalised copy of a file the first time they open it, so a leaked PDF names its source.
+- **A cloud you can run offline.** LocalStack plus Terraform gives real S3 calls and real infrastructure code at zero cost. The bugs that came up along the way are written up in [DEVOPS_PROOF.md](DEVOPS_PROOF.md).
+- **One API, three clients.** Trainer web, trainee web and mobile share the same role-checked FastAPI.
+
+## Limits & roadmap
+
+- [ ] Deploy to real AWS (the Terraform is ready; only the LocalStack endpoint changes)
+- [ ] Expand the backend test suite beyond the API smoke tests
+
+---
+
+<div align="center">
+
+<a href="https://shlokbam.in"><img src=".github/assets/footer.svg" alt="Built by Shlok Bam" width="100%"></a>
+
+<a href="https://shlokbam.in">shlokbam.in</a> · <a href="https://www.linkedin.com/in/shlokbam/">LinkedIn</a> · <a href="https://github.com/shlokbam">More projects</a>
+
+</div>
